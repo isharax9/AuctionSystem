@@ -1,10 +1,9 @@
 package com.auction.ejb;
 
 import com.auction.entity.Auction;
-import jakarta.annotation.*;
+import com.auction.dto.AuctionDTO;
 import jakarta.ejb.*;
-
-
+import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,8 +30,8 @@ public class AuctionServiceBean implements AuctionServiceRemote {
     }
 
     @Override
-    public Auction createAuction(String title, String description,
-                                 double startingPrice, LocalDateTime endTime) {
+    public AuctionDTO createAuction(String title, String description,
+                                    double startingPrice, LocalDateTime endTime) {
         logger.info("Creating new auction: " + title);
 
         Long auctionId = auctionIdCounter.getAndIncrement();
@@ -41,22 +40,24 @@ public class AuctionServiceBean implements AuctionServiceRemote {
         auctions.put(auctionId, auction);
 
         logger.info("Auction created successfully with ID: " + auctionId);
-        return auction;
+        return convertToDTO(auction);
     }
 
     @Override
-    public Auction getAuction(Long auctionId) {
+    public AuctionDTO getAuction(Long auctionId) {
         logger.info("Retrieving auction with ID: " + auctionId);
-        return auctions.get(auctionId);
+        Auction auction = auctions.get(auctionId);
+        return auction != null ? convertToDTO(auction) : null;
     }
 
     @Override
-    public List<Auction> getAllActiveAuctions() {
+    public List<AuctionDTO> getAllActiveAuctions() {
         logger.info("Retrieving all active auctions");
 
         return auctions.values().stream()
                 .filter(auction -> auction.isActive() &&
                         auction.getEndTime().isAfter(LocalDateTime.now()))
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -85,6 +86,39 @@ public class AuctionServiceBean implements AuctionServiceRemote {
                 .filter(auction -> auction.isActive() &&
                         auction.getEndTime().isAfter(LocalDateTime.now()))
                 .count();
+    }
+
+    // Helper method to convert Auction to AuctionDTO
+    private AuctionDTO convertToDTO(Auction auction) {
+        try {
+            return new AuctionDTO(
+                    auction.getAuctionId(),
+                    auction.getTitle(),
+                    auction.getDescription(),
+                    auction.getStartingPrice(),
+                    auction.getCurrentHighestBid(),
+                    auction.getCurrentHighestBidder(),
+                    auction.getStartTime(),
+                    auction.getEndTime(),
+                    auction.isActive(),
+                    auction.getBids().size()
+            );
+        } catch (Exception e) {
+            logger.warning("Error converting auction to DTO: " + e.getMessage());
+            // Return a minimal DTO if conversion fails
+            return new AuctionDTO(
+                    auction.getAuctionId(),
+                    auction.getTitle(),
+                    auction.getDescription(),
+                    auction.getStartingPrice(),
+                    auction.getCurrentHighestBid(),
+                    auction.getCurrentHighestBidder(),
+                    auction.getStartTime(),
+                    auction.getEndTime(),
+                    auction.isActive(),
+                    0
+            );
+        }
     }
 
     private void createSampleAuctions() {

@@ -1,11 +1,13 @@
-package com.auction.entity;
+package com.auction.dto;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
-public class Auction implements Serializable {
+/**
+ * Data Transfer Object for Auction
+ * Lightweight version for web layer communication
+ */
+public class AuctionDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long auctionId;
@@ -17,47 +19,25 @@ public class Auction implements Serializable {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private boolean active;
+    private int bidCount;
 
-    // Remove non-serializable fields from main class
-    private transient AtomicLong bidCounter;
-    private transient ConcurrentHashMap<Long, Bid> bids;
+    public AuctionDTO() {}
 
-    public Auction() {
-        initializeTransientFields();
-    }
-
-    public Auction(Long auctionId, String title, String description,
-                   double startingPrice, LocalDateTime endTime) {
+    // Constructor from Auction entity
+    public AuctionDTO(Long auctionId, String title, String description,
+                      double startingPrice, double currentHighestBid,
+                      String currentHighestBidder, LocalDateTime startTime,
+                      LocalDateTime endTime, boolean active, int bidCount) {
         this.auctionId = auctionId;
         this.title = title;
         this.description = description;
         this.startingPrice = startingPrice;
-        this.currentHighestBid = startingPrice;
-        this.startTime = LocalDateTime.now();
+        this.currentHighestBid = currentHighestBid;
+        this.currentHighestBidder = currentHighestBidder;
+        this.startTime = startTime;
         this.endTime = endTime;
-        this.active = true;
-        initializeTransientFields();
-    }
-
-    // Initialize transient fields after deserialization
-    private void initializeTransientFields() {
-        if (this.bidCounter == null) {
-            this.bidCounter = new AtomicLong(0);
-        }
-        if (this.bids == null) {
-            this.bids = new ConcurrentHashMap<>();
-        }
-    }
-
-    // Custom serialization methods
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-        out.defaultWriteObject();
-        // Don't serialize the concurrent collections
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initializeTransientFields();
+        this.active = active;
+        this.bidCount = bidCount;
     }
 
     // Getters and Setters
@@ -92,15 +72,6 @@ public class Auction implements Serializable {
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
 
-    public ConcurrentHashMap<Long, Bid> getBids() {
-        if (bids == null) initializeTransientFields();
-        return bids;
-    }
-
-    public void setBids(ConcurrentHashMap<Long, Bid> bids) { this.bids = bids; }
-
-    public long getNextBidId() {
-        if (bidCounter == null) initializeTransientFields();
-        return bidCounter.incrementAndGet();
-    }
+    public int getBidCount() { return bidCount; }
+    public void setBidCount(int bidCount) { this.bidCount = bidCount; }
 }

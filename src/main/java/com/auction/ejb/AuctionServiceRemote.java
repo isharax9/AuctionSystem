@@ -1,5 +1,6 @@
 package com.auction.ejb;
 
+import com.auction.dto.AuctionDTO;
 import com.auction.entity.Auction;
 import jakarta.ejb.Remote;
 
@@ -8,9 +9,9 @@ import java.util.List;
 
 @Remote
 public interface AuctionServiceRemote {
-    Auction createAuction(String title, String description, double startingPrice, LocalDateTime endTime);
-    Auction getAuction(Long auctionId);
-    List<Auction> getAllActiveAuctions();
+    AuctionDTO createAuction(String title, String description, double startingPrice, LocalDateTime endTime);
+    AuctionDTO getAuction(Long auctionId);
+    List<AuctionDTO> getAllActiveAuctions();
     boolean closeAuction(Long auctionId);
     boolean isAuctionActive(Long auctionId);
     int getActiveAuctionCount();

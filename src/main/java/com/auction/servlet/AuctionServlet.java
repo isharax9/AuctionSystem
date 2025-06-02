@@ -1,5 +1,7 @@
 package com.auction.servlet;
 
+import com.auction.dto.AuctionDTO;
+import com.auction.dto.BidDTO;
 import com.auction.ejb.*;
 import com.auction.entity.Auction;
 import com.auction.entity.Bid;
@@ -149,7 +151,7 @@ public class AuctionServlet extends HttpServlet {
         // Active Auctions List
         out.println("<h2>🔥 Active Auctions</h2>");
 
-        List<Auction> auctions = auctionService.getAllActiveAuctions();
+        List<AuctionDTO> auctions = auctionService.getAllActiveAuctions();
 
         if (auctions.isEmpty()) {
             out.println("<p>No active auctions at the moment.</p>");
@@ -158,7 +160,7 @@ public class AuctionServlet extends HttpServlet {
             out.println("<tr><th>ID</th><th>Title</th><th>Description</th><th>Current Bid</th>");
             out.println("<th>Highest Bidder</th><th>End Time</th><th>Actions</th></tr>");
 
-            for (Auction auction : auctions) {
+            for (AuctionDTO auction : auctions) {
                 out.println("<tr>");
                 out.println("<td>" + auction.getAuctionId() + "</td>");
                 out.println("<td><strong>" + auction.getTitle() + "</strong></td>");
@@ -180,7 +182,7 @@ public class AuctionServlet extends HttpServlet {
     }
 
     private void showAuctionDetails(PrintWriter out, Long auctionId) {
-        Auction auction = auctionService.getAuction(auctionId);
+        AuctionDTO auction = auctionService.getAuction(auctionId);
 
         if (auction == null) {
             showError(out, "Auction not found");
@@ -338,7 +340,7 @@ public class AuctionServlet extends HttpServlet {
 
             LocalDateTime endTime = LocalDateTime.now().plusHours(durationHours);
 
-            Auction auction = auctionService.createAuction(title, description, startingPrice, endTime);
+            AuctionDTO auction = auctionService.createAuction(title, description, startingPrice, endTime);
 
             if (auction != null) {
                 out.println("<html><head>");

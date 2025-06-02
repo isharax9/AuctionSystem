@@ -6,6 +6,8 @@ import com.auction.dto.BidUpdateMessage;
 import jakarta.ejb.*;
 import jakarta.annotation.Resource;
 import jakarta.jms.*;
+
+import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -101,7 +103,7 @@ public class BidServiceBean implements BidServiceRemote {
     }
 
     @Override
-    public Bid getHighestBid(Long auctionId) {
+    public Serializable getHighestBid(Long auctionId) {
         ConcurrentHashMap<Long, Auction> auctions = AuctionServiceBean.getAuctions();
         Auction auction = auctions.get(auctionId);
 
