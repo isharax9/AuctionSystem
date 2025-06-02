@@ -5,7 +5,6 @@ import com.auction.entity.Auction;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.ejb.*;
-//import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +46,7 @@ public class UserServiceBean implements UserServiceRemote {
     }
 
     @Override
-    public User registerUser(String username, String email) {
+    public User registerUser(String username, String email, String password) {
         logger.info("Registering new user: " + username);
 
         if (users.containsKey(username)) {
@@ -55,7 +54,13 @@ public class UserServiceBean implements UserServiceRemote {
             return null;
         }
 
-        User newUser = new User(username, email);
+        // Validate password
+        if (password == null || password.trim().length() < 4) {
+            logger.warning("Password too short for user: " + username);
+            return null;
+        }
+
+        User newUser = new User(username, email, password);
         users.put(username, newUser);
 
         // Set current session user
@@ -72,11 +77,16 @@ public class UserServiceBean implements UserServiceRemote {
     }
 
     @Override
-    public boolean authenticateUser(String username) {
+    public boolean authenticateUser(String username, String password) {
         logger.info("Authenticating user: " + username);
 
+        if (username == null || password == null) {
+            logger.warning("Username or password is null");
+            return false;
+        }
+
         User user = users.get(username);
-        if (user != null && user.isActive()) {
+        if (user != null && user.isActive() && user.verifyPassword(password)) {
             this.currentUsername = username;
             updateUserActivity(username);
             logger.info("User authenticated successfully: " + username);
@@ -147,6 +157,42 @@ public class UserServiceBean implements UserServiceRemote {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public boolean changePassword(String username, String oldPassword, String newPassword) {
+        logger.info("Changing password for user: " + username);
+
+        User user = users.get(username);
+        if (user != null && user.verifyPassword(oldPassword)) {
+            if (newPassword != null && newPassword.trim().length() >= 4) {
+                user.setPassword(newPassword);
+                logger.info("Password changed successfully for user: " + username);
+                return true;
+            } else {
+                logger.warning("New password too short for user: " + username);
+            }
+        } else {
+            logger.warning("Old password verification failed for user: " + username);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean resetPassword(String username, String newPassword) {
+        logger.info("Resetting password for user: " + username);
+
+        User user = users.get(username);
+        if (user != null) {
+            if (newPassword != null && newPassword.trim().length() >= 4) {
+                user.setPassword(newPassword);
+                logger.info("Password reset successfully for user: " + username);
+                return true;
+            } else {
+                logger.warning("New password too short for user: " + username);
+            }
+        }
+        return false;
+    }
+
     // Session-specific methods
     public String getCurrentUsername() {
         return currentUsername;
@@ -161,16 +207,16 @@ public class UserServiceBean implements UserServiceRemote {
     }
 
     private void createSampleUsers() {
-        // Create sample users for testing
-        registerUser("john_doe", "john@example.com");
-        registerUser("jane_smith", "jane@example.com");
-        registerUser("bob_wilson", "bob@example.com");
-        registerUser("alice_brown", "alice@example.com");
+        // Create sample users for testing with default password "1234"
+        registerUser("john_doe", "john@example.com", "1234");
+        registerUser("jane_smith", "jane@example.com", "1234");
+        registerUser("bob_wilson", "bob@example.com", "1234");
+        registerUser("alice_brown", "alice@example.com", "1234");
 
         // Reset the current username after creating samples
         this.currentUsername = null;
 
-        logger.info("Sample users created");
+        logger.info("Sample users created with default password '1234'");
     }
 
     // Package-private method for accessing users (used by other EJBs)

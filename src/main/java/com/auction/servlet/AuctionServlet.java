@@ -1,9 +1,7 @@
 package com.auction.servlet;
 
 import com.auction.dto.AuctionDTO;
-import com.auction.dto.BidDTO;
 import com.auction.ejb.*;
-import com.auction.entity.Auction;
 import com.auction.entity.Bid;
 import com.auction.entity.User;
 import com.auction.session.UserSessionManagerRemote;
@@ -72,6 +70,8 @@ public class AuctionServlet extends HttpServlet {
                 showSessionStatus(request, out);
             } else if (pathInfo.equals("/profile")) {
                 showUserProfile(request, out);
+            } else if (pathInfo.equals("/change-password")) {
+                showChangePasswordForm(request, out);
             } else {
                 showError(out, "Page not found");
             }
@@ -101,6 +101,8 @@ public class AuctionServlet extends HttpServlet {
                 handleUserRegistration(request, out);
             } else if (pathInfo != null && pathInfo.equals("/create")) {
                 handleAuctionCreation(request, out);
+            } else if (pathInfo != null && pathInfo.equals("/change-password")) {
+                handlePasswordChange(request, out);
             } else {
                 showError(out, "Invalid POST request");
             }
@@ -117,14 +119,50 @@ public class AuctionServlet extends HttpServlet {
         out.println("table { border-collapse: collapse; width: 100%; }");
         out.println("th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }");
         out.println("th { background-color: #f2f2f2; }");
-        out.println(".bid-form { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }");
+        out.println(".form-container { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }");
         out.println(".status { background-color: #e7f3ff; padding: 10px; margin: 10px 0; }");
         out.println(".user-info { background-color: #d4edda; padding: 10px; margin: 10px 0; border-radius: 5px; }");
-        out.println(".logout-btn { background-color: #dc3545; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px; }");
+        out.println(".logout-btn { background-color: #dc3545; color: white; padding: 5px 10px; text-decoration: none; border-radius: 3px; border: none; cursor: pointer; }");
         out.println(".nav-link { margin-right: 15px; }");
+        out.println(".form-group { margin: 10px 0; }");
+        out.println(".form-group label { display: inline-block; width: 120px; font-weight: bold; }");
+        out.println(".form-group input { padding: 5px; width: 200px; }");
+        out.println(".btn { background-color: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }");
+        out.println(".error-msg { color: #dc3545; background-color: #f8d7da; padding: 10px; margin: 10px 0; border-radius: 5px; }");
+        out.println(".success-msg { color: #155724; background-color: #d4edda; padding: 10px; margin: 10px 0; border-radius: 5px; }");
         out.println("</style></head><body>");
 
         out.println("<h1>🏺 Online Auction System</h1>");
+
+        // Show messages if any
+        String error = request.getParameter("error");
+        String message = request.getParameter("message");
+
+        if (error != null) {
+            switch (error) {
+                case "login_failed":
+                    out.println("<div class='error-msg'>❌ Login failed! Invalid username or password.</div>");
+                    break;
+                case "session_expired":
+                    out.println("<div class='error-msg'>⏰ Your session has expired. Please login again.</div>");
+                    break;
+                default:
+                    out.println("<div class='error-msg'>❌ " + error + "</div>");
+            }
+        }
+
+        if (message != null) {
+            switch (message) {
+                case "logged_out":
+                    out.println("<div class='success-msg'>✅ You have been logged out successfully.</div>");
+                    break;
+                case "password_changed":
+                    out.println("<div class='success-msg'>✅ Password changed successfully!</div>");
+                    break;
+                default:
+                    out.println("<div class='success-msg'>✅ " + message + "</div>");
+            }
+        }
 
         // Show user session info if logged in
         String currentUser = getCurrentUser(request);
@@ -187,6 +225,7 @@ public class AuctionServlet extends HttpServlet {
             }
         }
 
+        out.println("| <a href='/AuctionSystem/auction/change-password' style='margin-right: 10px;'>Change Password</a>");
         out.println("| <form method='post' action='/AuctionSystem/auction/logout' style='display: inline;'>");
         out.println("<button type='submit' class='logout-btn'>Logout</button>");
         out.println("</form>");
@@ -194,34 +233,270 @@ public class AuctionServlet extends HttpServlet {
     }
 
     private void showLoginForm(PrintWriter out) {
-        out.println("<div class='bid-form'>");
+        out.println("<div class='form-container'>");
         out.println("<h3>🔐 User Login</h3>");
         out.println("<form method='post' action='/AuctionSystem/auction/login'>");
-        out.println("Username: <input type='text' name='username' required> ");
-        out.println("<input type='submit' value='Login'>");
-        out.println("</form></div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='username'>Username:</label>");
+        out.println("<input type='text' id='username' name='username' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='password'>Password:</label>");
+        out.println("<input type='password' id='password' name='password' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<input type='submit' value='Login' class='btn'>");
+        out.println("</div>");
+        out.println("</form>");
+        out.println("<p><small><strong>Sample Users:</strong> john_doe, jane_smith, bob_wilson, alice_brown (Password: 1234)</small></p>");
+        out.println("</div>");
     }
 
     private void showRegistrationForm(PrintWriter out) {
-        out.println("<div class='bid-form'>");
-        out.println("<h3>📝 Quick User Registration</h3>");
+        out.println("<div class='form-container'>");
+        out.println("<h3>📝 Create New Account</h3>");
         out.println("<form method='post' action='/AuctionSystem/auction/register'>");
-        out.println("Username: <input type='text' name='username' required> ");
-        out.println("Email: <input type='email' name='email' required> ");
-        out.println("<input type='submit' value='Register'>");
-        out.println("</form></div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='reg_username'>Username:</label>");
+        out.println("<input type='text' id='reg_username' name='username' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='reg_email'>Email:</label>");
+        out.println("<input type='email' id='reg_email' name='email' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='reg_password'>Password:</label>");
+        out.println("<input type='password' id='reg_password' name='password' required minlength='4' placeholder='Minimum 4 characters'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<input type='submit' value='Register' class='btn'>");
+        out.println("</div>");
+        out.println("</form>");
+        out.println("</div>");
     }
 
+    private void showChangePasswordForm(HttpServletRequest request, PrintWriter out) {
+        String currentUser = getCurrentUser(request);
+        if (currentUser == null) {
+            showError(out, "Please login to change your password.");
+            return;
+        }
+
+        out.println("<html><head><title>Change Password</title>");
+        out.println("<style>");
+        out.println("body { font-family: Arial, sans-serif; margin: 20px; }");
+        out.println(".form-container { margin: 20px 0; padding: 20px; border: 1px solid #ccc; border-radius: 5px; max-width: 400px; }");
+        out.println(".form-group { margin: 15px 0; }");
+        out.println(".form-group label { display: block; font-weight: bold; margin-bottom: 5px; }");
+        out.println(".form-group input { padding: 8px; width: 100%; box-sizing: border-box; }");
+        out.println(".btn { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }");
+        out.println(".error-msg { color: #dc3545; background-color: #f8d7da; padding: 10px; margin: 10px 0; border-radius: 5px; }");
+        out.println("</style></head><body>");
+
+        out.println("<h1>🔑 Change Password</h1>");
+        out.println("<a href='/AuctionSystem/auction/'>← Back to Main Page</a><hr>");
+
+        String error = request.getParameter("error");
+        if (error != null) {
+            switch (error) {
+                case "wrong_password":
+                    out.println("<div class='error-msg'>❌ Current password is incorrect.</div>");
+                    break;
+                case "password_too_short":
+                    out.println("<div class='error-msg'>❌ New password must be at least 4 characters long.</div>");
+                    break;
+                case "change_failed":
+                    out.println("<div class='error-msg'>❌ Password change failed. Please try again.</div>");
+                    break;
+            }
+        }
+
+        out.println("<div class='form-container'>");
+        out.println("<h3>Change Your Password</h3>");
+        out.println("<form method='post' action='/AuctionSystem/auction/change-password'>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='current_password'>Current Password:</label>");
+        out.println("<input type='password' id='current_password' name='currentPassword' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='new_password'>New Password:</label>");
+        out.println("<input type='password' id='new_password' name='newPassword' required minlength='4'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='confirm_password'>Confirm New Password:</label>");
+        out.println("<input type='password' id='confirm_password' name='confirmPassword' required minlength='4'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<input type='submit' value='Change Password' class='btn'>");
+        out.println("</div>");
+        out.println("</form>");
+        out.println("</div>");
+
+        out.println("</body></html>");
+    }
+
+    private void handlePasswordChange(HttpServletRequest request, PrintWriter out) {
+        String currentUser = getCurrentUser(request);
+        if (currentUser == null) {
+            showError(out, "Please login to change your password.");
+            return;
+        }
+
+        String currentPassword = request.getParameter("currentPassword");
+        String newPassword = request.getParameter("newPassword");
+        String confirmPassword = request.getParameter("confirmPassword");
+
+        // Validate inputs
+        HttpServletResponse response = null;
+        if (currentPassword == null || newPassword == null || confirmPassword == null) {
+            try {
+                response.sendRedirect("/AuctionSystem/auction/change-password?error=missing_fields");
+            } catch (IOException e) {
+                showError(out, "Redirect failed");
+            }
+            return;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            try {
+                response.sendRedirect("/AuctionSystem/auction/change-password?error=passwords_dont_match");
+            } catch (IOException e) {
+                showError(out, "Redirect failed");
+            }
+            return;
+        }
+
+        if (newPassword.length() < 4) {
+            try {
+                response.sendRedirect("/AuctionSystem/auction/change-password?error=password_too_short");
+            } catch (IOException e) {
+                showError(out, "Redirect failed");
+            }
+            return;
+        }
+
+        // Update session activity
+        updateSessionActivity(request);
+
+        boolean success = userService.changePassword(currentUser, currentPassword, newPassword);
+
+        if (success) {
+            out.println("<html><head>");
+            out.println("<meta http-equiv='refresh' content='2;url=/AuctionSystem/auction/?message=password_changed'>");
+            out.println("</head><body>");
+            out.println("<h2>✅ Password Changed Successfully!</h2>");
+            out.println("<p>Your password has been updated.</p>");
+            out.println("<p>Redirecting to main page...</p>");
+            out.println("<a href='/AuctionSystem/auction/'>Click here if not redirected</a>");
+            out.println("</body></html>");
+        } else {
+            try {
+                response.sendRedirect("/AuctionSystem/auction/change-password?error=wrong_password");
+            } catch (IOException e) {
+                showError(out, "Redirect failed");
+            }
+        }
+    }
+
+    private void handleUserLogin(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        if (username == null || password == null || username.trim().isEmpty() || password.trim().isEmpty()) {
+            response.sendRedirect("/AuctionSystem/auction/?error=missing_credentials");
+            return;
+        }
+
+        if (userService.authenticateUser(username, password)) {
+            HttpSession session = request.getSession();
+
+            // Get client information for session security
+            String ipAddress = getClientIpAddress(request);
+            String userAgent = request.getHeader("User-Agent");
+
+            // Create secure session token
+            String sessionToken = sessionManager.createUserSession(
+                    username,
+                    session.getId(),
+                    ipAddress,
+                    userAgent != null ? userAgent : "Unknown"
+            );
+
+            // Store session token in HTTP session
+            session.setAttribute("sessionToken", sessionToken);
+            session.setAttribute("username", username);
+
+            logger.info("User logged in successfully: " + username);
+            response.sendRedirect("/AuctionSystem/auction/");
+        } else {
+            response.sendRedirect("/AuctionSystem/auction/?error=login_failed");
+        }
+    }
+
+    private void handleUserRegistration(HttpServletRequest request, PrintWriter out) {
+        String username = request.getParameter("username");
+        String email = request.getParameter("email");
+        String password = request.getParameter("password");
+
+        if (username == null || email == null || password == null ||
+                username.trim().isEmpty() || email.trim().isEmpty() || password.trim().isEmpty()) {
+            showError(out, "All fields are required for registration.");
+            return;
+        }
+
+        if (password.length() < 4) {
+            showError(out, "Password must be at least 4 characters long.");
+            return;
+        }
+
+        User user = userService.registerUser(username, email, password);
+
+        if (user != null) {
+            out.println("<html><head>");
+            out.println("<meta http-equiv='refresh' content='3;url=/AuctionSystem/auction/'>");
+            out.println("</head><body>");
+            out.println("<h2>✅ Registration Successful!</h2>");
+            out.println("<p>Welcome, " + username + "! Your account has been created.</p>");
+            out.println("<p>You can now login with your username and password to participate in auctions.</p>");
+            out.println("<p>Redirecting to main page...</p>");
+            out.println("<a href='/AuctionSystem/auction/'>Click here if not redirected</a>");
+            out.println("</body></html>");
+        } else {
+            showError(out, "Registration failed. Username might already exist or password is too short.");
+        }
+    }
+
+    // ... [Include all other methods from the previous version - showAuctionCreationForm, showActiveAuctionsList,
+    // showAuctionDetails, showBidHistory, showSessionStatus, showUserProfile, handleBidSubmission,
+    // handleUserLogout, handleAuctionCreation, showUserList, showSystemStatus, showError,
+    // getCurrentUser, updateSessionActivity, getClientIpAddress] ...
+
     private void showAuctionCreationForm(PrintWriter out) {
-        out.println("<div class='bid-form'>");
+        out.println("<div class='form-container'>");
         out.println("<h3>🎯 Create New Auction</h3>");
         out.println("<form method='post' action='/AuctionSystem/auction/create'>");
-        out.println("Title: <input type='text' name='title' required><br><br>");
-        out.println("Description: <textarea name='description' required></textarea><br><br>");
-        out.println("Starting Price: $<input type='number' name='startingPrice' step='0.01' required><br><br>");
-        out.println("Duration (hours): <input type='number' name='duration' min='1' max='168' value='24' required><br><br>");
-        out.println("<input type='submit' value='Create Auction'>");
-        out.println("</form></div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='title'>Title:</label>");
+        out.println("<input type='text' id='title' name='title' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='description'>Description:</label>");
+        out.println("<textarea id='description' name='description' required style='width: 100%; height: 60px;'></textarea>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='startingPrice'>Starting Price ($):</label>");
+        out.println("<input type='number' id='startingPrice' name='startingPrice' step='0.01' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='duration'>Duration (hours):</label>");
+        out.println("<input type='number' id='duration' name='duration' min='1' max='168' value='24' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<input type='submit' value='Create Auction' class='btn'>");
+        out.println("</div>");
+        out.println("</form>");
+        out.println("</div>");
     }
 
     private void showActiveAuctionsList(PrintWriter out, boolean isLoggedIn) {
@@ -253,6 +528,11 @@ public class AuctionServlet extends HttpServlet {
             out.println("</table>");
         }
     }
+
+    // Include all other methods from previous version here...
+    // [Copy remaining methods: showAuctionDetails, showBidHistory, showSessionStatus, showUserProfile,
+    // handleBidSubmission, handleUserLogout, handleAuctionCreation, showUserList, showSystemStatus,
+    // showError, getCurrentUser, updateSessionActivity, getClientIpAddress]
 
     private void showAuctionDetails(HttpServletRequest request, PrintWriter out, Long auctionId) {
         AuctionDTO auction = auctionService.getAuction(auctionId);
@@ -423,6 +703,7 @@ public class AuctionServlet extends HttpServlet {
             out.println("<p><strong>Email:</strong> " + user.getEmail() + "</p>");
             out.println("<p><strong>Last Activity:</strong> " + user.getLastActivity().format(formatter) + "</p>");
             out.println("<p><strong>Status:</strong> " + (user.isActive() ? "🟢 Active" : "🔴 Inactive") + "</p>");
+            out.println("<p><a href='/AuctionSystem/auction/change-password'>🔑 Change Password</a></p>");
             out.println("</div>");
 
             // Show user's active sessions
@@ -493,36 +774,6 @@ public class AuctionServlet extends HttpServlet {
         }
     }
 
-    private void handleUserLogin(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-        String username = request.getParameter("username");
-
-        if (userService.authenticateUser(username)) {
-            HttpSession session = request.getSession();
-
-            // Get client information for session security
-            String ipAddress = getClientIpAddress(request);
-            String userAgent = request.getHeader("User-Agent");
-
-            // Create secure session token
-            String sessionToken = sessionManager.createUserSession(
-                    username,
-                    session.getId(),
-                    ipAddress,
-                    userAgent != null ? userAgent : "Unknown"
-            );
-
-            // Store session token in HTTP session
-            session.setAttribute("sessionToken", sessionToken);
-            session.setAttribute("username", username);
-
-            logger.info("User logged in successfully: " + username);
-            response.sendRedirect("/AuctionSystem/auction/");
-        } else {
-            response.sendRedirect("/AuctionSystem/auction/?error=login_failed");
-        }
-    }
-
     private void handleUserLogout(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         HttpSession session = request.getSession(false);
@@ -543,26 +794,6 @@ public class AuctionServlet extends HttpServlet {
         }
 
         response.sendRedirect("/AuctionSystem/auction/?message=logged_out");
-    }
-
-    private void handleUserRegistration(HttpServletRequest request, PrintWriter out) {
-        String username = request.getParameter("username");
-        String email = request.getParameter("email");
-
-        User user = userService.registerUser(username, email);
-
-        if (user != null) {
-            out.println("<html><head>");
-            out.println("<meta http-equiv='refresh' content='2;url=/AuctionSystem/auction/'>");
-            out.println("</head><body>");
-            out.println("<h2>✅ Registration Successful!</h2>");
-            out.println("<p>Welcome, " + username + "! You can now login to participate in auctions.</p>");
-            out.println("<p>Redirecting to main page...</p>");
-            out.println("<a href='/AuctionSystem/auction/'>Click here if not redirected</a>");
-            out.println("</body></html>");
-        } else {
-            showError(out, "Registration failed. Username might already exist.");
-        }
     }
 
     private void handleAuctionCreation(HttpServletRequest request, PrintWriter out) {
@@ -686,6 +917,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p>✅ Message Processing - Active</p>");
         out.println("<p>✅ Session Management - Active</p>");
         out.println("<p>✅ Session Security Validation - Active</p>");
+        out.println("<p>✅ Password Authentication - Active</p>");
         out.println("</div>");
 
         out.println("</body></html>");
