@@ -2,11 +2,14 @@ package com.auction.ejb;
 
 import com.auction.entity.User;
 import com.auction.entity.Auction;
-import javax.ejb.*;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.ejb.*;
+//import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.logging.Logger;
 
@@ -164,7 +167,7 @@ public class UserServiceBean implements UserServiceRemote {
         registerUser("bob_wilson", "bob@example.com");
         registerUser("alice_brown", "alice@example.com");
 
-        // Reset current username after creating samples
+        // Reset the current username after creating samples
         this.currentUsername = null;
 
         logger.info("Sample users created");

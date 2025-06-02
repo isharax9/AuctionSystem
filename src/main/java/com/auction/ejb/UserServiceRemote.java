@@ -1,7 +1,8 @@
 package com.auction.ejb;
 
 import com.auction.entity.User;
-import javax.ejb.Remote;
+import jakarta.ejb.Remote;
+
 import java.util.List;
 
 @Remote

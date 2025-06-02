@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Error - Auction System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+
+    .error-container {
+      background: white;
+      padding: 3rem;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 650px;
+      width: 90%;
+    }
+
+    .error-icon {
+      font-size: 6rem;
+      margin-bottom: 1rem;
+    }
+
+    .error-title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: #333;
+      font-weight: 700;
+    }
+
+    .error-message {
+      font-size: 1.2rem;
+      color: #666;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .error-details {
+      background: #fff3cd;
+      color: #856404;
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin: 1rem 0;
+      border-left: 4px solid #ffc107;
+      text-align: left;
+    }
+
+    .btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      color: white;
+      padding: 1rem 2rem;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      margin: 0.5rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(0, 123, 255, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .troubleshooting {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin: 2rem 0;
+      text-align: left;
+    }
+
+    .troubleshooting h4 {
+      color: #333;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .troubleshooting ol {
+      color: #666;
+      padding-left: 1.5rem;
+    }
+
+    .troubleshooting li {
+      margin-bottom: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .system-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 2rem 0;
+    }
+
+    .info-card {
+      background: #e9ecef;
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .info-card h5 {
+      color: #495057;
+      margin-bottom: 0.5rem;
+    }
+
+    .info-card .status {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .status.online {
+      color: #28a745;
+    }
+
+    .status.warning {
+      color: #ffc107;
+    }
+
+    .status.offline {
+      color: #dc3545;
+    }
+
+    .contact-info {
+      background: #d1ecf1;
+      color: #0c5460;
+      padding: 1rem;
+      border-radius: 10px;
+      margin: 1rem 0;
+      border-left: 4px solid #17a2b8;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e9ecef;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .error-title {
+        font-size: 2rem;
+      }
+
+      .system-info {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="error-container">
+  <div class="error-icon">⚠️</div>
+  <h1 class="error-title">System Error</h1>
+  <p class="error-message">
+    An unexpected error occurred in the auction system. Our team has been automatically notified and is investigating the issue.
+  </p>
+
+  <div class="error-details">
+    <strong>📋 Error Information:</strong><br>
+    • <strong>Type:</strong> Application Exception<br>
+    • <strong>Time:</strong> <span id="errorTime"></span><br>
+    • <strong>Session ID:</strong> <span id="sessionId"></span><br>
+    • <strong>User Agent:</strong> <span id="userAgent"></span>
+  </div>
+
+  <div class="system-info">
+    <div class="info-card">
+      <h5>🌐 Web Services</h5>
+      <div class="status online">● Online</div>
+    </div>
+    <div class="info-card">
+      <h5>⚙️ EJB Container</h5>
+      <div class="status warning">● Checking</div>
+    </div>
+    <div class="info-card">
+      <h5>📨 JMS Messaging</h5>
+      <div class="status warning">● Checking</div>
+    </div>
+    <div class="info-card">
+      <h5>🏺 Auction Engine</h5>
+      <div class="status warning">● Checking</div>
+    </div>
+  </div>
+
+  <div class="troubleshooting">
+    <h4>🛠️ Troubleshooting Steps</h4>
+    <ol>
+      <li><strong>Wait and Retry:</strong> Most issues resolve automatically within 1-2 minutes</li>
+      <li><strong>Refresh Page:</strong> Press F5 or Ctrl+R to reload the current page</li>
+      <li><strong>Clear Browser Cache:</strong> Clear cookies and cached data for this site</li>
+      <li><strong>Check Internet Connection:</strong> Ensure you have a stable internet connection</li>
+      <li><strong>Try Different Browser:</strong> Switch to Chrome, Firefox, or Edge if available</li>
+      <li><strong>Contact Support:</strong> If the issue persists, use the contact information below</li>
+    </ol>
+  </div>
+
+  <div class="contact-info">
+    <strong>📞 Need Help?</strong><br>
+    If this error continues to occur, please contact our technical support team with the error information shown above.
+    <br><br>
+    <strong>Email:</strong> support@auctionsystem.com<br>
+    <strong>Phone:</strong> +1-800-AUCTION<br>
+    <strong>Hours:</strong> 24/7 Technical Support
+  </div>
+
+  <div>
+    <a href="/AuctionSystem/" class="btn btn-success">🏠 Return Home</a>
+    <a href="/AuctionSystem/auction/" class="btn">🏺 View Auctions</a>
+    <a href="/AuctionSystem/auction/status" class="btn">📊 System Status</a>
+    <a href="javascript:location.reload()" class="btn btn-secondary">🔄 Refresh Page</a>
+  </div>
+
+  <div class="footer">
+    <strong>Online Auction System</strong> - Business Component Development Project<br>
+    Enterprise JavaBeans + Java Message Service Architecture<br>
+    <em>Error Reference: GEN-ERR-<span id="errorRef"></span></em>
+  </div>
+</div>
+
+<script>
+  // Populate dynamic content
+  document.getElementById('errorTime').textContent = new Date().toLocaleString();
+  document.getElementById('sessionId').textContent = 'SES-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+  document.getElementById('userAgent').textContent = navigator.userAgent.substring(0, 50) + '...';
+  document.getElementById('errorRef').textContent = Date.now().toString().substr(-8);
+
+  // Simulate system status checks
+  setTimeout(function() {
+    const statusElements = document.querySelectorAll('.status.warning');
+    statusElements.forEach((element, index) => {
+      setTimeout(() => {
+        const rand = Math.random();
+        if (rand > 0.7) {
+          element.textContent = '● Online';
+          element.className = 'status online';
+        } else if (rand > 0.3) {
+          element.textContent = '● Warning';
+          element.className = 'status warning';
+        } else {
+          element.textContent = '● Error';
+          element.className = 'status offline';
+        }
+      }, index * 1000);
+    });
+  }, 3000);
+</script>
+</body>
+</html>

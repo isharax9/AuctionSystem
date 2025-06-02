@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Error - Auction System</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+
+    .error-container {
+      background: white;
+      padding: 3rem;
+      border-radius: 15px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    .error-code {
+      font-size: 8rem;
+      font-weight: 700;
+      color: #dc3545;
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+
+    .error-title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .error-message {
+      font-size: 1.1rem;
+      color: #666;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .error-details {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 1rem;
+      border-radius: 10px;
+      margin: 1rem 0;
+      border-left: 4px solid #dc3545;
+    }
+
+    .btn {
+      display: inline-block;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 1rem 2rem;
+      text-decoration: none;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      margin: 0.5rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(40, 167, 69, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+    }
+
+    .technical-info {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin: 2rem 0;
+      text-align: left;
+    }
+
+    .technical-info h4 {
+      color: #333;
+      margin-bottom: 1rem;
+    }
+
+    .technical-info ul {
+      color: #666;
+      padding-left: 1.5rem;
+    }
+
+    .technical-info li {
+      margin-bottom: 0.5rem;
+    }
+
+    .status-info {
+      background: #e2e3e5;
+      padding: 1rem;
+      border-radius: 10px;
+      margin: 1rem 0;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e9ecef;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      .error-code {
+        font-size: 6rem;
+      }
+
+      .error-title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="error-container">
+  <div class="error-code">500</div>
+  <h1 class="error-title">🚨 Internal Server Error</h1>
+  <p class="error-message">
+    Something went wrong with our auction system. Our technical team has been notified and is working to resolve the issue.
+  </p>
+
+  <div class="error-details">
+    <strong>Error Type:</strong> Internal Server Error<br>
+    <strong>Time:</strong> <span id="errorTime"></span><br>
+    <strong>Status:</strong> Temporary service disruption
+  </div>
+
+  <div class="technical-info">
+    <h4>🔧 Possible Causes:</h4>
+    <ul>
+      <li>EJB container connectivity issues</li>
+      <li>JMS messaging service temporarily unavailable</li>
+      <li>Database connection pool exhausted</li>
+      <li>High concurrent auction activity</li>
+      <li>Memory or resource constraints</li>
+    </ul>
+  </div>
+
+  <div class="status-info">
+    <strong>System Status Check:</strong><br>
+    • EJB Services: Checking...<br>
+    • JMS Messaging: Checking...<br>
+    • Database: Checking...<br>
+    • Web Layer: Active
+  </div>
+
+  <div class="technical-info">
+    <h4>💡 What you can do:</h4>
+    <ul>
+      <li>Wait a few minutes and try again</li>
+      <li>Refresh the page (F5 or Ctrl+R)</li>
+      <li>Check if other auction features are working</li>
+      <li>Contact support if the issue persists</li>
+      <li>Try accessing the system status page</li>
+    </ul>
+  </div>
+
+  <div>
+    <a href="/AuctionSystem/" class="btn">🏠 Go Home</a>
+    <a href="/AuctionSystem/auction/status" class="btn">📊 System Status</a>
+    <a href="javascript:location.reload()" class="btn btn-secondary">🔄 Retry</a>
+  </div>
+
+  <div class="footer">
+    <strong>Online Auction System - Error Reference</strong><br>
+    If this error persists, please report it to the system administrator.<br>
+    <em>Error ID: SRV-500-<span id="errorId"></span></em>
+  </div>
+</div>
+
+<script>
+  // Display current time
+  document.getElementById('errorTime').textContent = new Date().toLocaleString();
+
+  // Generate error ID
+  document.getElementById('errorId').textContent = Date.now().toString().substr(-6);
+
+  // Auto-refresh system status check (simulation)
+  setTimeout(function() {
+    const statusInfo = document.querySelector('.status-info');
+    statusInfo.innerHTML = `
+                <strong>System Status Check:</strong><br>
+                • EJB Services: <span style="color: #ffc107;">⚠️ Degraded</span><br>
+                • JMS Messaging: <span style="color: #dc3545;">❌ Error</span><br>
+                • Database: <span style="color: #28a745;">✅ Active</span><br>
+                • Web Layer: <span style="color: #28a745;">✅ Active</span>
+            `;
+  }, 2000);
+</script>
+</body>
+</html>

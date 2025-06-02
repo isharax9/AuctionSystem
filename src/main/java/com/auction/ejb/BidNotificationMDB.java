@@ -1,12 +1,13 @@
 package com.auction.ejb;
 
 import com.auction.dto.BidUpdateMessage;
-import javax.ejb.ActivationConfigProperty;
-import javax.ejb.MessageDriven;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageListener;
-import javax.jms.ObjectMessage;
+import jakarta.ejb.ActivationConfigProperty;
+import jakarta.ejb.*;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.MessageListener;
+import jakarta.jms.*;
+
 import java.util.logging.Logger;
 
 @MessageDriven(name = "BidNotificationMDB", activationConfig = {

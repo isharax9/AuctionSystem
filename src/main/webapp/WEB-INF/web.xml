@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+    <display-name>Distributed Online Auction System</display-name>
+    <description>
+        EJB-based auction system with JMS integration for real-time bidding.
+        This system demonstrates Enterprise JavaBeans, Java Message Service,
+        and distributed system architecture for Business Component Development.
+    </description>
+
+    <!-- Welcome Files -->
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+    <!-- Session Configuration -->
+    <session-config>
+        <session-timeout>30</session-timeout> <!-- 30 minutes -->
+        <cookie-config>
+            <http-only>true</http-only>
+            <secure>false</secure> <!-- Set to true in production with HTTPS -->
+        </cookie-config>
+        <tracking-mode>COOKIE</tracking-mode>
+    </session-config>
+
+    <!-- Error Pages -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error/404.html</location>
+    </error-page>
+
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error/500.html</location>
+    </error-page>
+
+    <error-page>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/error/general.html</location>
+    </error-page>
+
+    <!-- Security Constraints (Optional - for production) -->
+    <security-constraint>
+        <display-name>Auction System Security</display-name>
+        <web-resource-collection>
+            <web-resource-name>Admin Area</web-resource-name>
+            <url-pattern>/admin/*</url-pattern>
+            <http-method>GET</http-method>
+            <http-method>POST</http-method>
+        </web-resource-collection>
+        <!-- Uncomment for role-based security
+        <auth-constraint>
+            <role-name>admin</role-name>
+        </auth-constraint>
+        -->
+    </security-constraint>
+
+    <!-- Context Parameters -->
+    <context-param>
+        <param-name>auction.system.version</param-name>
+        <param-value>1.0.0</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>auction.system.environment</param-name>
+        <param-value>development</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>auction.bid.minimum.increment</param-name>
+        <param-value>5.0</param-value>
+    </context-param>
+
+    <!-- Filters -->
+    <filter>
+        <filter-name>CharacterEncodingFilter</filter-name>
+        <filter-class>com.auction.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>CharacterEncodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- MIME Type Mappings -->
+    <mime-mapping>
+        <extension>js</extension>
+        <mime-type>application/javascript</mime-type>
+    </mime-mapping>
+
+    <mime-mapping>
+        <extension>css</extension>
+        <mime-type>text/css</mime-type>
+    </mime-mapping>
+
+    <!-- Resource References for EJB Lookup -->
+    <ejb-ref>
+        <ejb-ref-name>ejb/AuctionService</ejb-ref-name>
+        <ejb-ref-type>Session</ejb-ref-type>
+        <remote>com.auction.ejb.AuctionServiceRemote</remote>
+    </ejb-ref>
+
+    <ejb-ref>
+        <ejb-ref-name>ejb/BidService</ejb-ref-name>
+        <ejb-ref-type>Session</ejb-ref-type>
+        <remote>com.auction.ejb.BidServiceRemote</remote>
+    </ejb-ref>
+
+    <ejb-ref>
+        <ejb-ref-name>ejb/UserService</ejb-ref-name>
+        <ejb-ref-type>Session</ejb-ref-type>
+        <remote>com.auction.ejb.UserServiceRemote</remote>
+    </ejb-ref>
+
+    <!-- JMS Resource References -->
+    <resource-ref>
+        <res-ref-name>jms/ConnectionFactory</res-ref-name>
+        <res-type>jakarta.jms.ConnectionFactory</res-type>
+        <res-auth>Container</res-auth>
+        <res-sharing-scope>Shareable</res-sharing-scope>
+    </resource-ref>
+
+    <resource-ref>
+        <res-ref-name>jms/topic/BidUpdates</res-ref-name>
+        <res-type>jakarta.jms.Topic</res-type>
+        <res-auth>Container</res-auth>
+        <res-sharing-scope>Shareable</res-sharing-scope>
+    </resource-ref>
+
+    <resource-ref>
+        <res-ref-name>jms/queue/BidQueue</res-ref-name>
+        <res-type>jakarta.jms.Queue</res-type>
+        <res-auth>Container</res-auth>
+        <res-sharing-scope>Shareable</res-sharing-scope>
+    </resource-ref>
+
+</web-app>

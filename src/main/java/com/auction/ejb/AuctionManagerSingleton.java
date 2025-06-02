@@ -1,9 +1,11 @@
 package com.auction.ejb;
 
 import com.auction.entity.Auction;
-import javax.ejb.*;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.*;
+import jakarta.ejb.Singleton;
+import jakarta.ejb.*;
+
+
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

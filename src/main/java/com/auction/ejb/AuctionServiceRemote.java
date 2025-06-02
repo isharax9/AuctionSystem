@@ -1,7 +1,8 @@
 package com.auction.ejb;
 
 import com.auction.entity.Auction;
-import javax.ejb.Remote;
+import jakarta.ejb.Remote;
+
 import java.time.LocalDateTime;
 import java.util.List;
 

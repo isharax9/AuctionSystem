@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<application xmlns="https://jakarta.ee/xml/ns/jakartaee"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+             https://jakarta.ee/xml/ns/jakartaee/application_10.xsd"
+             version="10">
+
+    <application-name>AuctionSystem</application-name>
+    <description>
+        Distributed Online Auction System with EJB and JMS
+        Business Component Development Assignment
+        Student: isharax9
+        Date: 2025-06-02
+    </description>
+
+    <display-name>Online Auction System</display-name>
+
+    <!-- Web Module -->
+    <module>
+        <web>
+            <web-uri>AuctionSystem.war</web-uri>
+            <context-root>/AuctionSystem</context-root>
+        </web>
+    </module>
+
+    <!-- EJB Module (if separate JAR) -->
+    <!--
+    <module>
+        <ejb>AuctionSystem-ejb.jar</ejb>
+    </module>
+    -->
+
+    <!-- Security Roles -->
+    <security-role>
+        <role-name>user</role-name>
+    </security-role>
+
+    <security-role>
+        <role-name>admin</role-name>
+    </security-role>
+
+    <security-role>
+        <role-name>bidder</role-name>
+    </security-role>
+
+</application>
