@@ -3,8 +3,8 @@ package com.auction.ejb;
 import com.auction.entity.Auction;
 import com.auction.entity.Bid;
 import com.auction.dto.BidUpdateMessage;
-import jakarta.annotation.*;
 import jakarta.ejb.*;
+import jakarta.annotation.Resource;
 import jakarta.jms.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,10 +18,11 @@ public class BidServiceBean implements BidServiceRemote {
     private static final Logger logger = Logger.getLogger(BidServiceBean.class.getName());
     private static final double MIN_BID_INCREMENT = 5.0;
 
-    @Resource(mappedName = "java:/ConnectionFactory")
+    // Fixed JNDI resource mappings for GlassFish
+    @Resource(mappedName = "jms/ConnectionFactory")
     private ConnectionFactory connectionFactory;
 
-    @Resource(mappedName = "java:/jms/topic/BidUpdates")
+    @Resource(mappedName = "jms/topic/BidUpdates")
     private Topic bidUpdatesTopic;
 
     @Override
@@ -73,8 +74,13 @@ public class BidServiceBean implements BidServiceRemote {
 
             logger.info("Bid placed successfully: " + bidId);
 
-            // Send JMS notification
-            sendBidUpdateNotification(auction, newBid);
+            // Send JMS notification (with error handling)
+            try {
+                sendBidUpdateNotification(auction, newBid);
+            } catch (Exception e) {
+                logger.warning("Failed to send JMS notification, but bid was placed: " + e.getMessage());
+                // Don't fail the bid placement if JMS fails
+            }
 
             return true;
         }
@@ -131,27 +137,40 @@ public class BidServiceBean implements BidServiceRemote {
     }
 
     private void sendBidUpdateNotification(Auction auction, Bid newBid) {
-        try (Connection connection = connectionFactory.createConnection();
-             Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)) {
+        try {
+            if (connectionFactory == null) {
+                logger.warning("ConnectionFactory is null, JMS notification skipped");
+                return;
+            }
 
-            MessageProducer producer = session.createProducer(bidUpdatesTopic);
+            if (bidUpdatesTopic == null) {
+                logger.warning("BidUpdates topic is null, JMS notification skipped");
+                return;
+            }
 
-            BidUpdateMessage updateMessage = new BidUpdateMessage(
-                    auction.getAuctionId(),
-                    auction.getTitle(),
-                    newBid.getBidAmount(),
-                    newBid.getBidderUsername(),
-                    newBid.getBidTime()
-            );
+            try (Connection connection = connectionFactory.createConnection();
+                 Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)) {
 
-            ObjectMessage message = session.createObjectMessage(updateMessage);
-            message.setStringProperty("auctionId", auction.getAuctionId().toString());
+                MessageProducer producer = session.createProducer(bidUpdatesTopic);
 
-            producer.send(message);
-            logger.info("Bid update notification sent for auction: " + auction.getAuctionId());
+                BidUpdateMessage updateMessage = new BidUpdateMessage(
+                        auction.getAuctionId(),
+                        auction.getTitle(),
+                        newBid.getBidAmount(),
+                        newBid.getBidderUsername(),
+                        newBid.getBidTime()
+                );
 
+                ObjectMessage message = session.createObjectMessage(updateMessage);
+                message.setStringProperty("auctionId", auction.getAuctionId().toString());
+
+                producer.send(message);
+                logger.info("Bid update notification sent for auction: " + auction.getAuctionId());
+
+            }
         } catch (JMSException e) {
-            logger.severe("Failed to send bid update notification: " + e.getMessage());
+            logger.warning("Failed to send bid update notification: " + e.getMessage());
+            // Don't rethrow - bid placement should succeed even if notification fails
         }
     }
 }

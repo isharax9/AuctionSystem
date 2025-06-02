@@ -2,19 +2,18 @@ package com.auction.ejb;
 
 import com.auction.dto.BidUpdateMessage;
 import jakarta.ejb.ActivationConfigProperty;
-import jakarta.ejb.*;
+import jakarta.ejb.MessageDriven;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import jakarta.jms.MessageListener;
-import jakarta.jms.*;
-
+import jakarta.jms.ObjectMessage;
 import java.util.logging.Logger;
 
 @MessageDriven(name = "BidNotificationMDB", activationConfig = {
         @ActivationConfigProperty(propertyName = "destinationLookup",
-                propertyValue = "java:/jms/topic/BidUpdates"),
+                propertyValue = "jms/topic/BidUpdates"),
         @ActivationConfigProperty(propertyName = "destinationType",
-                propertyValue = "javax.jms.Topic"),
+                propertyValue = "jakarta.jms.Topic"),
         @ActivationConfigProperty(propertyName = "acknowledgeMode",
                 propertyValue = "Auto-acknowledge")
 })
@@ -42,6 +41,8 @@ public class BidNotificationMDB implements MessageListener {
 
         } catch (JMSException e) {
             logger.severe("Error processing bid update message: " + e.getMessage());
+        } catch (Exception e) {
+            logger.severe("Unexpected error processing message: " + e.getMessage());
         }
     }
 

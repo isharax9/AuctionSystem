@@ -44,22 +44,6 @@
         <location>/error/general.html</location>
     </error-page>
 
-    <!-- Security Constraints (Optional - for production) -->
-    <security-constraint>
-        <display-name>Auction System Security</display-name>
-        <web-resource-collection>
-            <web-resource-name>Admin Area</web-resource-name>
-            <url-pattern>/admin/*</url-pattern>
-            <http-method>GET</http-method>
-            <http-method>POST</http-method>
-        </web-resource-collection>
-        <!-- Uncomment for role-based security
-        <auth-constraint>
-            <role-name>admin</role-name>
-        </auth-constraint>
-        -->
-    </security-constraint>
-
     <!-- Context Parameters -->
     <context-param>
         <param-name>auction.system.version</param-name>
@@ -101,46 +85,5 @@
         <extension>css</extension>
         <mime-type>text/css</mime-type>
     </mime-mapping>
-
-    <!-- Resource References for EJB Lookup -->
-    <ejb-ref>
-        <ejb-ref-name>ejb/AuctionService</ejb-ref-name>
-        <ejb-ref-type>Session</ejb-ref-type>
-        <remote>com.auction.ejb.AuctionServiceRemote</remote>
-    </ejb-ref>
-
-    <ejb-ref>
-        <ejb-ref-name>ejb/BidService</ejb-ref-name>
-        <ejb-ref-type>Session</ejb-ref-type>
-        <remote>com.auction.ejb.BidServiceRemote</remote>
-    </ejb-ref>
-
-    <ejb-ref>
-        <ejb-ref-name>ejb/UserService</ejb-ref-name>
-        <ejb-ref-type>Session</ejb-ref-type>
-        <remote>com.auction.ejb.UserServiceRemote</remote>
-    </ejb-ref>
-
-    <!-- JMS Resource References -->
-    <resource-ref>
-        <res-ref-name>jms/ConnectionFactory</res-ref-name>
-        <res-type>jakarta.jms.ConnectionFactory</res-type>
-        <res-auth>Container</res-auth>
-        <res-sharing-scope>Shareable</res-sharing-scope>
-    </resource-ref>
-
-    <resource-ref>
-        <res-ref-name>jms/topic/BidUpdates</res-ref-name>
-        <res-type>jakarta.jms.Topic</res-type>
-        <res-auth>Container</res-auth>
-        <res-sharing-scope>Shareable</res-sharing-scope>
-    </resource-ref>
-
-    <resource-ref>
-        <res-ref-name>jms/queue/BidQueue</res-ref-name>
-        <res-type>jakarta.jms.Queue</res-type>
-        <res-auth>Container</res-auth>
-        <res-sharing-scope>Shareable</res-sharing-scope>
-    </resource-ref>
 
 </web-app>
