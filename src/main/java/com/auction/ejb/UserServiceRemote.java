@@ -10,6 +10,7 @@ public interface UserServiceRemote {
     User registerUser(String username, String email, String password);
     User getUserByUsername(String username);
     boolean authenticateUser(String username, String password);
+    boolean isUserAdmin(String username);
     List<User> getAllActiveUsers();
     boolean updateUserActivity(String username);
     boolean deactivateUser(String username);

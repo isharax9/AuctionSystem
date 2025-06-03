@@ -11,9 +11,10 @@ public class User implements Serializable {
 
     private String username;
     private String email;
-    private String passwordHash;  // Store hashed password for security
+    private String passwordHash;
     private LocalDateTime lastActivity;
     private boolean active;
+    private boolean isAdmin;  // New admin flag
 
     public User() {}
 
@@ -22,6 +23,7 @@ public class User implements Serializable {
         this.email = email;
         this.lastActivity = LocalDateTime.now();
         this.active = true;
+        this.isAdmin = false;
         // Default password for sample users
         this.passwordHash = hashPassword("1234");
     }
@@ -31,6 +33,16 @@ public class User implements Serializable {
         this.email = email;
         this.lastActivity = LocalDateTime.now();
         this.active = true;
+        this.isAdmin = false;
+        this.passwordHash = hashPassword(password);
+    }
+
+    public User(String username, String email, String password, boolean isAdmin) {
+        this.username = username;
+        this.email = email;
+        this.lastActivity = LocalDateTime.now();
+        this.active = true;
+        this.isAdmin = isAdmin;
         this.passwordHash = hashPassword(password);
     }
 
@@ -70,4 +82,7 @@ public class User implements Serializable {
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    public boolean isAdmin() { return isAdmin; }
+    public void setAdmin(boolean admin) { isAdmin = admin; }
 }

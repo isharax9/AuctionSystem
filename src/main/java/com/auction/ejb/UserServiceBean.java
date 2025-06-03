@@ -98,6 +98,12 @@ public class UserServiceBean implements UserServiceRemote {
     }
 
     @Override
+    public boolean isUserAdmin(String username) {
+        User user = users.get(username);
+        return user != null && user.isAdmin();
+    }
+
+    @Override
     public List<User> getAllActiveUsers() {
         logger.info("Retrieving all active users");
 
@@ -207,6 +213,11 @@ public class UserServiceBean implements UserServiceRemote {
     }
 
     private void createSampleUsers() {
+        // Create admin user first
+        User adminUser = new User("admin@auction.com", "admin@auction.com", "11010001", true);
+        users.put("admin@auction.com", adminUser);
+        logger.info("Admin user created: admin@auction.com");
+
         // Create sample users for testing with default password "1234"
         registerUser("john_doe", "john@example.com", "1234");
         registerUser("jane_smith", "jane@example.com", "1234");
@@ -217,6 +228,7 @@ public class UserServiceBean implements UserServiceRemote {
         this.currentUsername = null;
 
         logger.info("Sample users created with default password '1234'");
+        logger.info("Admin user created with email: admin@auction.com and password: 11010001");
     }
 
     // Package-private method for accessing users (used by other EJBs)
