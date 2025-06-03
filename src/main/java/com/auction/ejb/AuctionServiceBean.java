@@ -21,6 +21,16 @@ public class AuctionServiceBean implements AuctionServiceRemote {
     private static final ConcurrentHashMap<Long, Auction> auctions = new ConcurrentHashMap<>();
     private static final AtomicLong auctionIdCounter = new AtomicLong(1);
 
+    public static void resetCounterForTesting() {
+        // Reset the auction ID counter to initial value
+        auctionIdCounter.set(0); // Assuming AtomicLong
+
+        // Optionally clear auctions for clean test state
+        auctions.clear();
+
+        logger.info("Counter and auction data reset for testing");
+    }
+
     @PostConstruct
     public void init() {
         // Initialize with some sample auctions for testing
