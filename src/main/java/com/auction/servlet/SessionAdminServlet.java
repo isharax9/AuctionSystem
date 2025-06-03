@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 public class SessionAdminServlet extends HttpServlet {
 
     private static final Logger logger = Logger.getLogger(SessionAdminServlet.class.getName());
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
     @EJB
     private UserSessionManagerRemote sessionManager;

@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 public class AuctionServlet extends HttpServlet {
 
     private static final Logger logger = Logger.getLogger(AuctionServlet.class.getName());
-    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
     @EJB
     private AuctionServiceRemote auctionService;

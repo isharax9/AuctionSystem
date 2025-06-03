@@ -181,7 +181,7 @@
 
     <div class="status">
         <strong>✅ System Status:</strong> All services operational<br>
-        <strong>📊 Server Time:</strong> <%= LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) %>
+        <strong>📊 Server Time:</strong> <%= LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")) %>
     </div>
 
     <div class="features">
