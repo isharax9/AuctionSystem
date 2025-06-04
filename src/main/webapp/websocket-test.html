@@ -1,134 +1,532 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>WebSocket Test</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .log { background: #f5f5f5; padding: 10px; height: 300px; overflow-y: scroll; border: 1px solid #ddd; }
-        .controls { margin: 10px 0; }
-        button { margin: 5px; padding: 10px; }
-        input { padding: 5px; margin: 5px; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auction Notifications</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/websocket-styles.css" rel="stylesheet">
 </head>
 <body>
-<h1>WebSocket Connection Test</h1>
+<div class="container">
+    <div class="nav-bar">
+        <h1>
+            <i class="fas fa-gavel"></i>
+            Auction Notification Dashboard
+        </h1>
+        <p>Real-time auction bidding system interface</p>
+    </div>
 
-<div class="controls">
-    <input type="number" id="auctionId" placeholder="Auction ID" value="1">
-    <button onclick="connect()">Connect</button>
-    <button onclick="disconnect()">Disconnect</button>
-    <button onclick="sendMessage()">Send Test Message</button>
-    <button onclick="clearLog()">Clear Log</button>
+    <div class="main-content">
+        <div class="left-panel">
+            <div class="form-container">
+                <h3>
+                    <i class="fas fa-cog"></i> Connection Controls
+                </h3>
+                <div class="controls-grid">
+                    <div class="form-group">
+                        <label for="auction-id">
+                            <i class="fas fa-hashtag"></i>
+                            Auction ID
+                        </label>
+                        <input type="number" id="auction-id" placeholder="Enter auction ID" value="1">
+                    </div>
+
+                    <button class="btn" onclick="connectToAuction()">
+                        <i class="fas fa-plug"></i>
+                        Connect
+                    </button>
+
+                    <button class="btn logout-btn" onclick="disconnectFromAuction()">
+                        <i class="fas fa-times"></i>
+                        Disconnect
+                    </button>
+
+                    <button class="btn btn-secondary" onclick="clearAllLogs()">
+                        <i class="fas fa-trash"></i>
+                        Clear All
+                    </button>
+                </div>
+            </div>
+
+            <div class="status" id="websocket-status-container">
+                <div id="websocket-status" class="status-indicator status-disconnected">
+                    <div class="status-dot"></div>
+                    <span>Disconnected</span>
+                </div>
+            </div>
+
+            <div class="auction-info">
+                <h3>
+                    <i class="fas fa-chart-line"></i>
+                    Current Auction Status
+                </h3>
+                <div class="bid-display">
+                    <div class="bid-stat">
+                        <div class="bid-stat-label">Highest Bid</div>
+                        <div class="bid-stat-value" id="highest-bid-1">$0.00</div>
+                    </div>
+                    <div class="bid-stat">
+                        <div class="bid-stat-label">Leading Bidder</div>
+                        <div class="bid-stat-value" id="highest-bidder-1">None</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bid-history">
+                <h3>
+                    <i class="fas fa-history"></i>
+                    Bid History
+                </h3>
+                <div id="bid-history-1">
+                    <div class="empty-state">
+                        <i class="fas fa-gavel"></i>
+                        <p>No bids yet. Connect to start monitoring!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="notifications-container">
+                <div class="notifications-header">
+                    <h3>
+                        <i class="fas fa-bell"></i>
+                        System Events
+                    </h3>
+                    <span id="notificationCount" class="badge">0 events</span>
+                </div>
+                <div id="notifications">
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No events yet. Connect to start monitoring!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div>Status: <span id="status">Disconnected</span></div>
-
-<h3>Log:</h3>
-<div id="log" class="log"></div>
-
 <script>
-    let websocket = null;
+    // Enhanced AuctionWebSocket class with UI integration
+    class AuctionWebSocket {
+        constructor(auctionId) {
+            this.auctionId = auctionId;
+            this.websocket = null;
+            this.reconnectAttempts = 0;
+            this.maxReconnectAttempts = 5;
+            this.reconnectDelay = 1000;
+            this.notificationCount = 0;
 
-    function log(message) {
-        const logDiv = document.getElementById('log');
-        const time = new Date().toLocaleTimeString();
-        logDiv.innerHTML += `[${time}] ${message}<br>`;
-        logDiv.scrollTop = logDiv.scrollHeight;
+            this.connect();
+        }
+
+        connect() {
+            try {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host;
+                const contextPath = window.location.pathname.split('/')[1];
+
+                // Multiple URL attempts for better compatibility
+                const urls = [
+                    `${protocol}//${host}/${contextPath}/auction-updates/${this.auctionId}`,
+                    `${protocol}//${host}/auction-updates/${this.auctionId}`,
+                    `${protocol}//${host}:8080/${contextPath}/auction-updates/${this.auctionId}`,
+                    `${protocol}//${host}:8080/auction-updates/${this.auctionId}`
+                ];
+
+                const wsUrl = urls[0]; // Try first URL
+
+                console.log('Connecting to WebSocket:', wsUrl);
+                this.addNotification(`Connecting to auction ${this.auctionId}...`, 'info');
+                this.addNotification(`WebSocket URL: ${wsUrl}`, 'info');
+
+                this.websocket = new WebSocket(wsUrl);
+
+                this.websocket.onopen = (event) => {
+                    console.log('WebSocket connected to auction:', this.auctionId);
+                    this.reconnectAttempts = 0;
+                    this.showConnectionStatus('Connected', 'connected');
+                    this.addNotification(`✅ Successfully connected to auction ${this.auctionId}!`, 'success');
+                };
+
+                this.websocket.onmessage = (event) => {
+                    console.log('WebSocket message received:', event.data);
+                    try {
+                        const message = JSON.parse(event.data);
+                        this.handleMessage(message);
+                    } catch (e) {
+                        console.error('Failed to parse WebSocket message:', e);
+                        this.addNotification(`❌ Failed to parse message: ${e.message}`, 'error');
+                    }
+                };
+
+                this.websocket.onclose = (event) => {
+                    console.log('WebSocket connection closed:', event.code, event.reason);
+                    this.showConnectionStatus('Disconnected', 'disconnected');
+                    this.addNotification(`🔌 Connection closed (Code: ${event.code})`, 'warning');
+                    this.handleReconnect();
+                };
+
+                this.websocket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.showConnectionStatus('Connection Error', 'error');
+                    this.addNotification(`💥 WebSocket connection error occurred`, 'error');
+                };
+
+            } catch (e) {
+                console.error('Failed to create WebSocket connection:', e);
+                this.addNotification(`💥 Failed to create WebSocket: ${e.message}`, 'error');
+                this.handleReconnect();
+            }
+        }
+
+        handleMessage(message) {
+            switch (message.type) {
+                case 'connection':
+                    console.log('Connection message:', message.message);
+                    this.addNotification(`🔗 ${message.message}`, 'info');
+                    break;
+
+                case 'bidUpdate':
+                    console.log('Bid update received:', message.data);
+                    this.updateBidDisplay(message.data);
+                    this.showBidNotification(message.data);
+                    // Only add one detailed notification for bid updates
+                    this.addBidNotification(message.data);
+                    break;
+
+                default:
+                    console.log('Unknown message type:', message.type);
+                    this.addNotification(`❓ Unknown message type: ${message.type}`, 'warning');
+            }
+        }
+
+        updateBidDisplay(bidData) {
+            // Update current highest bid display
+            const highestBidElement = document.getElementById('highest-bid-' + this.auctionId);
+            if (highestBidElement) {
+                highestBidElement.textContent = '$' + bidData.bidAmount.toFixed(2);
+                // Add animation effect
+                highestBidElement.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    highestBidElement.style.transform = 'scale(1)';
+                }, 200);
+            }
+
+            // Update highest bidder display
+            const highestBidderElement = document.getElementById('highest-bidder-' + this.auctionId);
+            if (highestBidderElement) {
+                highestBidderElement.textContent = bidData.bidderUsername;
+                // Add animation effect
+                highestBidderElement.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    highestBidderElement.style.transform = 'scale(1)';
+                }, 200);
+            }
+
+            // Add new bid to bid history
+            this.addBidToHistory(bidData);
+        }
+
+        addBidToHistory(bidData) {
+            const bidHistoryElement = document.getElementById('bid-history-' + this.auctionId);
+            if (bidHistoryElement) {
+                // Remove empty state if it exists
+                const emptyState = bidHistoryElement.querySelector('.empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+
+                const bidElement = document.createElement('div');
+                bidElement.className = 'bid-item new-bid';
+                bidElement.innerHTML = `
+                        <div class="bid-amount">$${bidData.bidAmount.toFixed(2)}</div>
+                        <div class="bid-user">${bidData.bidderUsername}</div>
+                        <div class="bid-time">${new Date().toLocaleTimeString()}</div>
+                    `;
+
+                bidHistoryElement.insertBefore(bidElement, bidHistoryElement.firstChild);
+
+                // Remove highlight after animation
+                setTimeout(() => {
+                    bidElement.classList.remove('new-bid');
+                }, 2000);
+
+                // Limit history to 20 items
+                const bidItems = bidHistoryElement.querySelectorAll('.bid-item');
+                if (bidItems.length > 20) {
+                    bidItems[bidItems.length - 1].remove();
+                }
+            }
+        }
+
+        addBidNotification(bidData) {
+            const currentTime = new Date();
+            const timeString = currentTime.toLocaleTimeString();
+            const dateString = currentTime.toLocaleDateString();
+
+            // Get auction title (fallback if not provided)
+            const auctionTitle = bidData.auctionTitle || bidData.title || bidData.itemTitle || `Auction Title #${this.auctionId}`;
+
+            // Create detailed notification message
+            const message = `🎯 New Bid Received!`;
+            const details = `
+                    <strong>Bid Amount:</strong> $${bidData.bidAmount.toFixed(2)}<br>
+                    <strong>Bidder:</strong> ${bidData.bidderUsername}<br>
+                    <strong>Auction Title:</strong> ${auctionTitle}<br>
+                    <strong>Auction ID:</strong> ${this.auctionId}<br>
+                    <strong>Date:</strong> ${dateString}<br>
+                    <strong>Time:</strong> ${timeString}
+                `;
+
+            this.addNotificationWithDetails(message, details, 'bid');
+        }
+
+        showBidNotification(bidData) {
+            // Get auction title (fallback if not provided)
+            const auctionTitle = bidData.auctionTitle || bidData.title || bidData.itemTitle || `Auction Title #${this.auctionId}`;
+
+            // Create enhanced toast notification
+            const notification = document.createElement('div');
+            notification.className = 'bid-notification';
+            notification.innerHTML = `
+                    <div class="notification-content">
+                        <div class="bid-icon">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <div class="bid-details">
+                            <div class="bid-amount">$${bidData.bidAmount.toFixed(2)}</div>
+                            <div class="bid-user">New bid by ${bidData.bidderUsername}</div>
+                            <div class="auction-title">${auctionTitle}</div>
+                        </div>
+                    </div>
+                `;
+
+            document.body.appendChild(notification);
+
+            // Show notification with sound effect (if supported)
+            setTimeout(() => {
+                notification.classList.add('show');
+                // Optional: Add sound notification
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRvQAAABXQVZFZm10IBAAAAABAAEBACAAAAAAAIBAAAAABAABAABAAP//TElTVAAAAAQAAABuZW1lAAAAAJAAABkCAAA=');
+                    audio.volume = 0.1;
+                    audio.play().catch(e => console.log('Audio play failed:', e));
+                } catch (e) {
+                    // Ignore audio errors
+                }
+            }, 100);
+
+            // Hide and remove notification
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 4000);
+        }
+
+        addNotification(message, type = 'info') {
+            const notificationsContainer = document.getElementById('notifications');
+            const time = new Date().toLocaleTimeString();
+
+            // Remove empty state if it exists
+            const emptyState = notificationsContainer.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+
+            const iconMap = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle',
+                warning: 'fas fa-exclamation-triangle',
+                bid: 'fas fa-gavel'
+            };
+
+            notification.innerHTML = `
+                    <div class="notification-header">
+                        <i class="${iconMap[type] || iconMap.info} notification-icon"></i>
+                        <span class="notification-time">${time}</span>
+                    </div>
+                    <div class="notification-message">${message}</div>
+                `;
+
+            notificationsContainer.insertBefore(notification, notificationsContainer.firstChild);
+
+            // Update notification count
+            this.notificationCount++;
+            document.getElementById('notificationCount').textContent = `${this.notificationCount} events`;
+
+            // Auto-scroll to top for new notifications
+            notificationsContainer.scrollTop = 0;
+
+            // Remove old notifications to prevent memory issues
+            const notifications = notificationsContainer.querySelectorAll('.notification');
+            if (notifications.length > 50) {
+                notifications[notifications.length - 1].remove();
+            }
+        }
+
+        addNotificationWithDetails(message, details, type = 'info') {
+            const notificationsContainer = document.getElementById('notifications');
+            const time = new Date().toLocaleTimeString();
+
+            // Remove empty state if it exists
+            const emptyState = notificationsContainer.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+
+            const iconMap = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                info: 'fas fa-info-circle',
+                warning: 'fas fa-exclamation-triangle',
+                bid: 'fas fa-gavel'
+            };
+
+            notification.innerHTML = `
+                    <div class="notification-header">
+                        <i class="${iconMap[type] || iconMap.info} notification-icon"></i>
+                        <span class="notification-time">${time}</span>
+                    </div>
+                    <div class="notification-message">${message}</div>
+                    <div class="notification-details">${details}</div>
+                `;
+
+            notificationsContainer.insertBefore(notification, notificationsContainer.firstChild);
+
+            // Update notification count
+            this.notificationCount++;
+            document.getElementById('notificationCount').textContent = `${this.notificationCount} events`;
+
+            // Auto-scroll to top for new notifications
+            notificationsContainer.scrollTop = 0;
+
+            // Remove old notifications to prevent memory issues
+            const notifications = notificationsContainer.querySelectorAll('.notification');
+            if (notifications.length > 50) {
+                notifications[notifications.length - 1].remove();
+            }
+        }
+
+        showConnectionStatus(status, type) {
+            const statusContainer = document.getElementById('websocket-status-container');
+            const statusElement = document.getElementById('websocket-status');
+
+            if (statusContainer && statusElement) {
+                // Update container class
+                statusContainer.className = `status status-${type}`;
+
+                // Update status indicator
+                statusElement.className = `status-indicator status-${type}`;
+                statusElement.querySelector('span').textContent = status;
+            }
+        }
+
+        handleReconnect() {
+            if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                this.reconnectAttempts++;
+                this.addNotification(`🔄 Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, 'warning');
+                console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+
+                setTimeout(() => {
+                    this.connect();
+                }, this.reconnectDelay * this.reconnectAttempts);
+            } else {
+                console.log('Max reconnection attempts reached');
+                this.showConnectionStatus('Connection Failed', 'error');
+                this.addNotification(`❌ Max reconnection attempts reached. Please try manually.`, 'error');
+            }
+        }
+
+        disconnect() {
+            if (this.websocket) {
+                this.websocket.close();
+                this.addNotification(`🔌 Disconnected by user`, 'warning');
+            }
+        }
     }
 
-    function connect() {
-        const auctionId = document.getElementById('auctionId').value;
+    // Global variables
+    let auctionWebSocket = null;
+
+    // Control functions
+    function connectToAuction() {
+        const auctionIdElement = document.getElementById('auction-id');
+        const auctionId = auctionIdElement.value;
+
         if (!auctionId) {
-            log('Please enter an auction ID');
+            addSystemNotification('Please enter an auction ID', 'warning');
             return;
         }
 
-        if (websocket) {
-            websocket.close();
+        // Disconnect existing connection
+        if (auctionWebSocket) {
+            auctionWebSocket.disconnect();
         }
 
-        // Try different URL patterns
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.host;
-        const contextPath = window.location.pathname.split('/')[1];
-
-        // Multiple URL attempts
-        const urls = [
-            `${protocol}//${host}/${contextPath}/auction-updates/${auctionId}`,
-            `${protocol}//${host}/auction-updates/${auctionId}`,
-            `${protocol}//${host}:8080/${contextPath}/auction-updates/${auctionId}`,
-            `${protocol}//${host}:8080/auction-updates/${auctionId}`
-        ];
-
-        log('Attempting WebSocket connection...');
-        log('Auction ID: ' + auctionId);
-        log('Protocol: ' + protocol);
-        log('Host: ' + host);
-        log('Context Path: ' + contextPath);
-
-        for (let url of urls) {
-            log('Trying URL: ' + url);
-        }
-
-        // Try first URL
-        const wsUrl = urls[0];
-        log('Connecting to: ' + wsUrl);
-
-        try {
-            websocket = new WebSocket(wsUrl);
-
-            websocket.onopen = function(event) {
-                log('✅ WebSocket connected successfully!');
-                document.getElementById('status').textContent = 'Connected';
-                document.getElementById('status').style.color = 'green';
-            };
-
-            websocket.onmessage = function(event) {
-                log('📨 Message received: ' + event.data);
-            };
-
-            websocket.onclose = function(event) {
-                log('❌ WebSocket connection closed. Code: ' + event.code + ', Reason: ' + event.reason);
-                document.getElementById('status').textContent = 'Disconnected';
-                document.getElementById('status').style.color = 'red';
-            };
-
-            websocket.onerror = function(error) {
-                log('💥 WebSocket error: ' + error);
-                document.getElementById('status').textContent = 'Error';
-                document.getElementById('status').style.color = 'red';
-            };
-
-        } catch (e) {
-            log('💥 Failed to create WebSocket: ' + e.message);
-        }
+        // Create new connection
+        auctionWebSocket = new AuctionWebSocket(auctionId);
     }
 
-    function disconnect() {
-        if (websocket) {
-            websocket.close();
-            websocket = null;
-            log('Disconnected by user');
-        }
-    }
-
-    function sendMessage() {
-        if (websocket && websocket.readyState === WebSocket.OPEN) {
-            const message = '{"type":"test","message":"Hello from client","timestamp":' + Date.now() + '}';
-            websocket.send(message);
-            log('📤 Sent: ' + message);
+    function disconnectFromAuction() {
+        if (auctionWebSocket) {
+            auctionWebSocket.disconnect();
+            auctionWebSocket = null;
         } else {
-            log('❌ WebSocket not connected');
+            addSystemNotification('No active connection to disconnect', 'warning');
         }
     }
 
-    function clearLog() {
-        document.getElementById('log').innerHTML = '';
+    function clearAllLogs() {
+        // Clear notifications
+        const notificationsContainer = document.getElementById('notifications');
+        notificationsContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>Logs cleared. Connect to start monitoring!</p>
+                </div>
+            `;
+
+        // Clear bid history
+        const bidHistoryContainer = document.getElementById('bid-history-1');
+        bidHistoryContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-gavel"></i>
+                    <p>No bids yet. Connect to start monitoring!</p>
+                </div>
+            `;
+
+        // Reset counters
+        document.getElementById('notificationCount').textContent = '0 events';
+        if (auctionWebSocket) {
+            auctionWebSocket.notificationCount = 0;
+        }
+
+        addSystemNotification('All logs cleared successfully', 'info');
     }
 
-    // Auto-connect on page load
+    function addSystemNotification(message, type) {
+        if (auctionWebSocket) {
+            auctionWebSocket.addNotification(message, type);
+        }
+    }
+
+    // Auto-initialize
     window.onload = function() {
-        log('Page loaded. Click Connect to test WebSocket.');
+        addSystemNotification('🚀 Online Auction Notification Interface loaded successfully', 'success');
+        addSystemNotification('👆 Enter an Auction ID and click Connect to begin monitoring', 'info');
     };
 </script>
 </body>
