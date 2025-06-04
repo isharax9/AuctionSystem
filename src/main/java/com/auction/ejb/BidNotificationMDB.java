@@ -1,6 +1,7 @@
 package com.auction.ejb;
 
 import com.auction.dto.BidUpdateMessage;
+import com.auction.websocket.AuctionWebSocketEndpoint;
 import jakarta.ejb.ActivationConfigProperty;
 import jakarta.ejb.MessageDriven;
 import jakarta.jms.JMSException;
@@ -23,15 +24,19 @@ public class BidNotificationMDB implements MessageListener {
 
     @Override
     public void onMessage(Message message) {
+        logger.info("=== BidNotificationMDB.onMessage() CALLED ===");
         try {
-            logger.info("Received bid update message");
+            logger.info("Received bid update message of type: " + message.getClass().getName());
 
             if (message instanceof ObjectMessage) {
                 ObjectMessage objectMessage = (ObjectMessage) message;
                 Object obj = objectMessage.getObject();
+                logger.info("ObjectMessage contains: " + obj.getClass().getName());
 
                 if (obj instanceof BidUpdateMessage) {
-                    handleBidUpdate((BidUpdateMessage) obj);
+                    BidUpdateMessage bidUpdate = (BidUpdateMessage) obj;
+                    logger.info("Processing BidUpdateMessage: " + bidUpdate.toString());
+                    handleBidUpdate(bidUpdate);
                 } else {
                     logger.warning("Received unexpected message type: " + obj.getClass().getName());
                 }
@@ -41,57 +46,61 @@ public class BidNotificationMDB implements MessageListener {
 
         } catch (JMSException e) {
             logger.severe("Error processing bid update message: " + e.getMessage());
+            e.printStackTrace();
         } catch (Exception e) {
             logger.severe("Unexpected error processing message: " + e.getMessage());
+            e.printStackTrace();
         }
+        logger.info("=== BidNotificationMDB.onMessage() COMPLETED ===");
     }
 
     private void handleBidUpdate(BidUpdateMessage bidUpdate) {
+        logger.info("=== handleBidUpdate() START ===");
         logger.info("Processing bid update: " + bidUpdate.toString());
 
-        // In a real application, this would:
-        // 1. Update WebSocket connections to push real-time updates
-        // 2. Send email notifications to outbid users
-        // 3. Update caching layers
-        // 4. Log analytics data
-        // 5. Trigger other business processes
+        // 1. Send REAL WebSocket notifications
+        sendRealTimeNotification(bidUpdate);
 
-        // For demonstration, we'll simulate these operations
-        simulateRealTimeNotification(bidUpdate);
+        // 2. Simulate email notifications
         simulateEmailNotification(bidUpdate);
+
+        // 3. Log analytics
         simulateAnalyticsLogging(bidUpdate);
+
+        logger.info("=== handleBidUpdate() END ===");
     }
 
-    private void simulateRealTimeNotification(BidUpdateMessage bidUpdate) {
-        // Simulate pushing update to WebSocket clients
-        logger.info(String.format("WEBSOCKET PUSH: Auction %d - New bid $%.2f by %s",
-                bidUpdate.getAuctionId(), bidUpdate.getBidAmount(), bidUpdate.getBidderUsername()));
+    private void sendRealTimeNotification(BidUpdateMessage bidUpdate) {
+        logger.info("=== sendRealTimeNotification() START ===");
+        try {
+            // Log WebSocket session status
+            AuctionWebSocketEndpoint.logAllSessions();
 
-        // In production, this would integrate with:
-        // - WebSocket endpoints
-        // - Server-Sent Events (SSE)
-        // - Push notification services
+            // Get active session count
+            int activeConnections = AuctionWebSocketEndpoint.getActiveSessionCount(bidUpdate.getAuctionId());
+
+            logger.info(String.format("REAL-TIME PUSH: Broadcasting to %d WebSocket connections for auction %d - New bid $%.2f by %s",
+                    activeConnections, bidUpdate.getAuctionId(), bidUpdate.getBidAmount(), bidUpdate.getBidderUsername()));
+
+            // Broadcast to all connected WebSocket clients
+            AuctionWebSocketEndpoint.broadcastBidUpdate(bidUpdate);
+
+            logger.info("WebSocket broadcast completed");
+
+        } catch (Exception e) {
+            logger.severe("Failed to send real-time WebSocket notification: " + e.getMessage());
+            e.printStackTrace();
+        }
+        logger.info("=== sendRealTimeNotification() END ===");
     }
 
     private void simulateEmailNotification(BidUpdateMessage bidUpdate) {
-        // Simulate sending email to previous highest bidder
         logger.info(String.format("EMAIL NOTIFICATION: Previous bidders notified for auction %d",
                 bidUpdate.getAuctionId()));
-
-        // In production, this would:
-        // - Query database for previous bidders
-        // - Send personalized email notifications
-        // - Handle email delivery failures
     }
 
     private void simulateAnalyticsLogging(BidUpdateMessage bidUpdate) {
-        // Simulate logging analytics data
         logger.info(String.format("ANALYTICS: Bid event - Auction: %d, Amount: $%.2f, Time: %s",
                 bidUpdate.getAuctionId(), bidUpdate.getBidAmount(), bidUpdate.getBidTime()));
-
-        // In production, this would:
-        // - Store data in analytics database
-        // - Update real-time dashboards
-        // - Trigger business intelligence processes
     }
 }

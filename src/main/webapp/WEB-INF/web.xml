@@ -86,4 +86,9 @@
         <mime-type>text/css</mime-type>
     </mime-mapping>
 
+    <!-- WebSocket Configuration -->
+    <listener>
+        <listener-class>com.auction.config.WebSocketConfigurator</listener-class>
+    </listener>
+
 </web-app>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .log { background: #f5f5f5; padding: 10px; height: 300px; overflow-y: scroll; border: 1px solid #ddd; }
+        .controls { margin: 10px 0; }
+        button { margin: 5px; padding: 10px; }
+        input { padding: 5px; margin: 5px; }
+    </style>
+</head>
+<body>
+<h1>WebSocket Connection Test</h1>
+
+<div class="controls">
+    <input type="number" id="auctionId" placeholder="Auction ID" value="1">
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+    <button onclick="sendMessage()">Send Test Message</button>
+    <button onclick="clearLog()">Clear Log</button>
+</div>
+
+<div>Status: <span id="status">Disconnected</span></div>
+
+<h3>Log:</h3>
+<div id="log" class="log"></div>
+
+<script>
+    let websocket = null;
+
+    function log(message) {
+        const logDiv = document.getElementById('log');
+        const time = new Date().toLocaleTimeString();
+        logDiv.innerHTML += `[${time}] ${message}<br>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function connect() {
+        const auctionId = document.getElementById('auctionId').value;
+        if (!auctionId) {
+            log('Please enter an auction ID');
+            return;
+        }
+
+        if (websocket) {
+            websocket.close();
+        }
+
+        // Try different URL patterns
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.host;
+        const contextPath = window.location.pathname.split('/')[1];
+
+        // Multiple URL attempts
+        const urls = [
+            `${protocol}//${host}/${contextPath}/auction-updates/${auctionId}`,
+            `${protocol}//${host}/auction-updates/${auctionId}`,
+            `${protocol}//${host}:8080/${contextPath}/auction-updates/${auctionId}`,
+            `${protocol}//${host}:8080/auction-updates/${auctionId}`
+        ];
+
+        log('Attempting WebSocket connection...');
+        log('Auction ID: ' + auctionId);
+        log('Protocol: ' + protocol);
+        log('Host: ' + host);
+        log('Context Path: ' + contextPath);
+
+        for (let url of urls) {
+            log('Trying URL: ' + url);
+        }
+
+        // Try first URL
+        const wsUrl = urls[0];
+        log('Connecting to: ' + wsUrl);
+
+        try {
+            websocket = new WebSocket(wsUrl);
+
+            websocket.onopen = function(event) {
+                log('✅ WebSocket connected successfully!');
+                document.getElementById('status').textContent = 'Connected';
+                document.getElementById('status').style.color = 'green';
+            };
+
+            websocket.onmessage = function(event) {
+                log('📨 Message received: ' + event.data);
+            };
+
+            websocket.onclose = function(event) {
+                log('❌ WebSocket connection closed. Code: ' + event.code + ', Reason: ' + event.reason);
+                document.getElementById('status').textContent = 'Disconnected';
+                document.getElementById('status').style.color = 'red';
+            };
+
+            websocket.onerror = function(error) {
+                log('💥 WebSocket error: ' + error);
+                document.getElementById('status').textContent = 'Error';
+                document.getElementById('status').style.color = 'red';
+            };
+
+        } catch (e) {
+            log('💥 Failed to create WebSocket: ' + e.message);
+        }
+    }
+
+    function disconnect() {
+        if (websocket) {
+            websocket.close();
+            websocket = null;
+            log('Disconnected by user');
+        }
+    }
+
+    function sendMessage() {
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            const message = '{"type":"test","message":"Hello from client","timestamp":' + Date.now() + '}';
+            websocket.send(message);
+            log('📤 Sent: ' + message);
+        } else {
+            log('❌ WebSocket not connected');
+        }
+    }
+
+    function clearLog() {
+        document.getElementById('log').innerHTML = '';
+    }
+
+    // Auto-connect on page load
+    window.onload = function() {
+        log('Page loaded. Click Connect to test WebSocket.');
+    };
+</script>
+</body>
+</html>

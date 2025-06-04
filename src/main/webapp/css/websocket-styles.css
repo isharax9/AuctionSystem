@@ -1,0 +1,90 @@
+/* WebSocket Connection Status */
+.connection-status {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.connection-status.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.connection-status.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Bid Notifications */
+.bid-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    max-width: 300px;
+}
+
+.bid-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-content {
+    text-align: center;
+}
+
+/* New Bid Animation */
+.bid-item.new-bid {
+    background-color: #fff3cd !important;
+    border-left: 4px solid #ffc107;
+    animation: highlightBid 2s ease-out;
+}
+
+@keyframes highlightBid {
+    0% {
+        background-color: #d1ecf1;
+        transform: scale(1.02);
+    }
+    100% {
+        background-color: #fff3cd;
+        transform: scale(1);
+    }
+}
+
+/* Bid History Styles */
+.bid-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    transition: all 0.3s ease;
+}
+
+.bid-amount {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 1.1em;
+}
+
+.bid-user {
+    color: #6c757d;
+}
+
+.bid-time {
+    font-size: 0.9em;
+    color: #6c757d;
+}
