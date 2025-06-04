@@ -32,12 +32,12 @@
                         <input type="number" id="auction-id" placeholder="Enter auction ID" value="1">
                     </div>
 
-                    <button class="btn" onclick="connectToAuction()">
+                    <button class="btn" id="connect-btn" onclick="connectToAuction()">
                         <i class="fas fa-plug"></i>
                         Connect
                     </button>
 
-                    <button class="btn logout-btn" onclick="disconnectFromAuction()">
+                    <button class="btn logout-btn" id="disconnect-btn" onclick="disconnectFromAuction()" disabled>
                         <i class="fas fa-times"></i>
                         Disconnect
                     </button>
@@ -61,14 +61,20 @@
                     <i class="fas fa-chart-line"></i>
                     Current Auction Status
                 </h3>
+                <div class="current-auction-id">
+                    <div class="bid-stat">
+                        <div class="bid-stat-label">Monitoring Auction</div>
+                        <div class="bid-stat-value" id="current-auction-id">None</div>
+                    </div>
+                </div>
                 <div class="bid-display">
                     <div class="bid-stat">
                         <div class="bid-stat-label">Highest Bid</div>
-                        <div class="bid-stat-value" id="highest-bid-1">$0.00</div>
+                        <div class="bid-stat-value" id="highest-bid">$0.00</div>
                     </div>
                     <div class="bid-stat">
                         <div class="bid-stat-label">Leading Bidder</div>
-                        <div class="bid-stat-value" id="highest-bidder-1">None</div>
+                        <div class="bid-stat-value" id="highest-bidder">None</div>
                     </div>
                 </div>
             </div>
@@ -78,7 +84,7 @@
                     <i class="fas fa-history"></i>
                     Bid History
                 </h3>
-                <div id="bid-history-1">
+                <div id="bid-history">
                     <div class="empty-state">
                         <i class="fas fa-gavel"></i>
                         <p>No bids yet. Connect to start monitoring!</p>
@@ -117,11 +123,21 @@
             this.maxReconnectAttempts = 5;
             this.reconnectDelay = 1000;
             this.notificationCount = 0;
+            this.isConnected = false;
+            this.isConnecting = false;
 
             this.connect();
         }
 
         connect() {
+            if (this.isConnecting || this.isConnected) {
+                console.log('Already connecting or connected');
+                return;
+            }
+
+            this.isConnecting = true;
+            this.updateConnectionButtons();
+
             try {
                 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
                 const host = window.location.host;
@@ -146,7 +162,11 @@
                 this.websocket.onopen = (event) => {
                     console.log('WebSocket connected to auction:', this.auctionId);
                     this.reconnectAttempts = 0;
+                    this.isConnected = true;
+                    this.isConnecting = false;
                     this.showConnectionStatus('Connected', 'connected');
+                    this.updateConnectionButtons();
+                    this.updateCurrentAuctionDisplay();
                     this.addNotification(`✅ Successfully connected to auction ${this.auctionId}!`, 'success');
                 };
 
@@ -163,21 +183,79 @@
 
                 this.websocket.onclose = (event) => {
                     console.log('WebSocket connection closed:', event.code, event.reason);
+                    this.isConnected = false;
+                    this.isConnecting = false;
                     this.showConnectionStatus('Disconnected', 'disconnected');
+                    this.updateConnectionButtons();
+                    this.resetAuctionDisplay();
                     this.addNotification(`🔌 Connection closed (Code: ${event.code})`, 'warning');
-                    this.handleReconnect();
+
+                    // Only auto-reconnect if it wasn't a manual disconnect
+                    if (event.code !== 1000) {
+                        this.handleReconnect();
+                    }
                 };
 
                 this.websocket.onerror = (error) => {
                     console.error('WebSocket error:', error);
+                    this.isConnected = false;
+                    this.isConnecting = false;
                     this.showConnectionStatus('Connection Error', 'error');
+                    this.updateConnectionButtons();
                     this.addNotification(`💥 WebSocket connection error occurred`, 'error');
                 };
 
             } catch (e) {
                 console.error('Failed to create WebSocket connection:', e);
+                this.isConnecting = false;
+                this.updateConnectionButtons();
                 this.addNotification(`💥 Failed to create WebSocket: ${e.message}`, 'error');
                 this.handleReconnect();
+            }
+        }
+
+        updateConnectionButtons() {
+            const connectBtn = document.getElementById('connect-btn');
+            const disconnectBtn = document.getElementById('disconnect-btn');
+
+            if (this.isConnecting) {
+                connectBtn.disabled = true;
+                connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connecting...';
+                disconnectBtn.disabled = true;
+            } else if (this.isConnected) {
+                connectBtn.disabled = true;
+                connectBtn.innerHTML = '<i class="fas fa-plug"></i> Connect';
+                disconnectBtn.disabled = false;
+            } else {
+                connectBtn.disabled = false;
+                connectBtn.innerHTML = '<i class="fas fa-plug"></i> Connect';
+                disconnectBtn.disabled = true;
+            }
+        }
+
+        updateCurrentAuctionDisplay() {
+            const currentAuctionElement = document.getElementById('current-auction-id');
+            if (currentAuctionElement) {
+                currentAuctionElement.textContent = `#${this.auctionId}`;
+            }
+        }
+
+        resetAuctionDisplay() {
+            // Reset current auction display
+            const currentAuctionElement = document.getElementById('current-auction-id');
+            if (currentAuctionElement) {
+                currentAuctionElement.textContent = 'None';
+            }
+
+            // Reset bid display
+            const highestBidElement = document.getElementById('highest-bid');
+            if (highestBidElement) {
+                highestBidElement.textContent = '$0.00';
+            }
+
+            const highestBidderElement = document.getElementById('highest-bidder');
+            if (highestBidderElement) {
+                highestBidderElement.textContent = 'None';
             }
         }
 
@@ -192,7 +270,6 @@
                     console.log('Bid update received:', message.data);
                     this.updateBidDisplay(message.data);
                     this.showBidNotification(message.data);
-                    // Only add one detailed notification for bid updates
                     this.addBidNotification(message.data);
                     break;
 
@@ -203,8 +280,8 @@
         }
 
         updateBidDisplay(bidData) {
-            // Update current highest bid display
-            const highestBidElement = document.getElementById('highest-bid-' + this.auctionId);
+            // Update current highest bid display (removed auction-specific ID)
+            const highestBidElement = document.getElementById('highest-bid');
             if (highestBidElement) {
                 highestBidElement.textContent = '$' + bidData.bidAmount.toFixed(2);
                 // Add animation effect
@@ -214,8 +291,8 @@
                 }, 200);
             }
 
-            // Update highest bidder display
-            const highestBidderElement = document.getElementById('highest-bidder-' + this.auctionId);
+            // Update highest bidder display (removed auction-specific ID)
+            const highestBidderElement = document.getElementById('highest-bidder');
             if (highestBidderElement) {
                 highestBidderElement.textContent = bidData.bidderUsername;
                 // Add animation effect
@@ -230,7 +307,7 @@
         }
 
         addBidToHistory(bidData) {
-            const bidHistoryElement = document.getElementById('bid-history-' + this.auctionId);
+            const bidHistoryElement = document.getElementById('bid-history');
             if (bidHistoryElement) {
                 // Remove empty state if it exists
                 const emptyState = bidHistoryElement.querySelector('.empty-state');
@@ -241,10 +318,10 @@
                 const bidElement = document.createElement('div');
                 bidElement.className = 'bid-item new-bid';
                 bidElement.innerHTML = `
-                        <div class="bid-amount">$${bidData.bidAmount.toFixed(2)}</div>
-                        <div class="bid-user">${bidData.bidderUsername}</div>
-                        <div class="bid-time">${new Date().toLocaleTimeString()}</div>
-                    `;
+                    <div class="bid-amount">$${bidData.bidAmount.toFixed(2)}</div>
+                    <div class="bid-user">${bidData.bidderUsername}</div>
+                    <div class="bid-time">${new Date().toLocaleTimeString()}</div>
+                `;
 
                 bidHistoryElement.insertBefore(bidElement, bidHistoryElement.firstChild);
 
@@ -272,13 +349,13 @@
             // Create detailed notification message
             const message = `🎯 New Bid Received!`;
             const details = `
-                    <strong>Bid Amount:</strong> $${bidData.bidAmount.toFixed(2)}<br>
-                    <strong>Bidder:</strong> ${bidData.bidderUsername}<br>
-                    <strong>Auction Title:</strong> ${auctionTitle}<br>
-                    <strong>Auction ID:</strong> ${this.auctionId}<br>
-                    <strong>Date:</strong> ${dateString}<br>
-                    <strong>Time:</strong> ${timeString}
-                `;
+                <strong>Bid Amount:</strong> $${bidData.bidAmount.toFixed(2)}<br>
+                <strong>Bidder:</strong> ${bidData.bidderUsername}<br>
+                <strong>Auction Title:</strong> ${auctionTitle}<br>
+                <strong>Auction ID:</strong> ${this.auctionId}<br>
+                <strong>Date:</strong> ${dateString}<br>
+                <strong>Time:</strong> ${timeString}
+            `;
 
             this.addNotificationWithDetails(message, details, 'bid');
         }
@@ -291,17 +368,17 @@
             const notification = document.createElement('div');
             notification.className = 'bid-notification';
             notification.innerHTML = `
-                    <div class="notification-content">
-                        <div class="bid-icon">
-                            <i class="fas fa-gavel"></i>
-                        </div>
-                        <div class="bid-details">
-                            <div class="bid-amount">$${bidData.bidAmount.toFixed(2)}</div>
-                            <div class="bid-user">New bid by ${bidData.bidderUsername}</div>
-                            <div class="auction-title">${auctionTitle}</div>
-                        </div>
+                <div class="notification-content">
+                    <div class="bid-icon">
+                        <i class="fas fa-gavel"></i>
                     </div>
-                `;
+                    <div class="bid-details">
+                        <div class="bid-amount">$${bidData.bidAmount.toFixed(2)}</div>
+                        <div class="bid-user">New bid by ${bidData.bidderUsername}</div>
+                        <div class="auction-title">${auctionTitle}</div>
+                    </div>
+                </div>
+            `;
 
             document.body.appendChild(notification);
 
@@ -351,12 +428,12 @@
             };
 
             notification.innerHTML = `
-                    <div class="notification-header">
-                        <i class="${iconMap[type] || iconMap.info} notification-icon"></i>
-                        <span class="notification-time">${time}</span>
-                    </div>
-                    <div class="notification-message">${message}</div>
-                `;
+                <div class="notification-header">
+                    <i class="${iconMap[type] || iconMap.info} notification-icon"></i>
+                    <span class="notification-time">${time}</span>
+                </div>
+                <div class="notification-message">${message}</div>
+            `;
 
             notificationsContainer.insertBefore(notification, notificationsContainer.firstChild);
 
@@ -396,13 +473,13 @@
             };
 
             notification.innerHTML = `
-                    <div class="notification-header">
-                        <i class="${iconMap[type] || iconMap.info} notification-icon"></i>
-                        <span class="notification-time">${time}</span>
-                    </div>
-                    <div class="notification-message">${message}</div>
-                    <div class="notification-details">${details}</div>
-                `;
+                <div class="notification-header">
+                    <i class="${iconMap[type] || iconMap.info} notification-icon"></i>
+                    <span class="notification-time">${time}</span>
+                </div>
+                <div class="notification-message">${message}</div>
+                <div class="notification-details">${details}</div>
+            `;
 
             notificationsContainer.insertBefore(notification, notificationsContainer.firstChild);
 
@@ -435,13 +512,15 @@
         }
 
         handleReconnect() {
-            if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            if (this.reconnectAttempts < this.maxReconnectAttempts && !this.isConnected) {
                 this.reconnectAttempts++;
                 this.addNotification(`🔄 Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`, 'warning');
                 console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
 
                 setTimeout(() => {
-                    this.connect();
+                    if (!this.isConnected) { // Only reconnect if still disconnected
+                        this.connect();
+                    }
                 }, this.reconnectDelay * this.reconnectAttempts);
             } else {
                 console.log('Max reconnection attempts reached');
@@ -451,9 +530,12 @@
         }
 
         disconnect() {
-            if (this.websocket) {
-                this.websocket.close();
+            if (this.websocket && this.isConnected) {
+                this.isConnected = false;
+                this.websocket.close(1000, 'User disconnect'); // Normal closure
                 this.addNotification(`🔌 Disconnected by user`, 'warning');
+                this.updateConnectionButtons();
+                this.resetAuctionDisplay();
             }
         }
     }
@@ -471,17 +553,21 @@
             return;
         }
 
-        // Disconnect existing connection
-        if (auctionWebSocket) {
+        // Disconnect existing connection if any
+        if (auctionWebSocket && auctionWebSocket.isConnected) {
             auctionWebSocket.disconnect();
+            // Wait a moment before creating new connection
+            setTimeout(() => {
+                auctionWebSocket = new AuctionWebSocket(auctionId);
+            }, 500);
+        } else {
+            // Create new connection
+            auctionWebSocket = new AuctionWebSocket(auctionId);
         }
-
-        // Create new connection
-        auctionWebSocket = new AuctionWebSocket(auctionId);
     }
 
     function disconnectFromAuction() {
-        if (auctionWebSocket) {
+        if (auctionWebSocket && auctionWebSocket.isConnected) {
             auctionWebSocket.disconnect();
             auctionWebSocket = null;
         } else {
@@ -493,20 +579,20 @@
         // Clear notifications
         const notificationsContainer = document.getElementById('notifications');
         notificationsContainer.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <p>Logs cleared. Connect to start monitoring!</p>
-                </div>
-            `;
+            <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <p>Logs cleared. Connect to start monitoring!</p>
+            </div>
+        `;
 
         // Clear bid history
-        const bidHistoryContainer = document.getElementById('bid-history-1');
+        const bidHistoryContainer = document.getElementById('bid-history');
         bidHistoryContainer.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-gavel"></i>
-                    <p>No bids yet. Connect to start monitoring!</p>
-                </div>
-            `;
+            <div class="empty-state">
+                <i class="fas fa-gavel"></i>
+                <p>No bids yet. Connect to start monitoring!</p>
+            </div>
+        `;
 
         // Reset counters
         document.getElementById('notificationCount').textContent = '0 events';
@@ -518,9 +604,36 @@
     }
 
     function addSystemNotification(message, type) {
-        if (auctionWebSocket) {
-            auctionWebSocket.addNotification(message, type);
+        // Create a temporary notification system for when websocket is not available
+        const notificationsContainer = document.getElementById('notifications');
+        const time = new Date().toLocaleTimeString();
+
+        // Remove empty state if it exists
+        const emptyState = notificationsContainer.querySelector('.empty-state');
+        if (emptyState) {
+            emptyState.remove();
         }
+
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+
+        const iconMap = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            info: 'fas fa-info-circle',
+            warning: 'fas fa-exclamation-triangle',
+            bid: 'fas fa-gavel'
+        };
+
+        notification.innerHTML = `
+            <div class="notification-header">
+                <i class="${iconMap[type] || iconMap.info} notification-icon"></i>
+                <span class="notification-time">${time}</span>
+            </div>
+            <div class="notification-message">${message}</div>
+        `;
+
+        notificationsContainer.insertBefore(notification, notificationsContainer.firstChild);
     }
 
     // Auto-initialize

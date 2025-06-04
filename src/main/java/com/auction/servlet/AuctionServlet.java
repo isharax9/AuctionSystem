@@ -211,6 +211,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<a href='/AuctionSystem/auction/users' class='nav-link'>👥 Users</a>");
         out.println("<a href='/AuctionSystem/auction/status' class='nav-link'>📊 System Status</a>");
         out.println("<a href='/AuctionSystem/auction/sessions' class='nav-link'>🔐 Sessions</a>");
+        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'>🔔 Notifications</a>");
         if (currentUser != null) {
             out.println("<a href='/AuctionSystem/auction/profile' class='nav-link'>👤 Profile</a>");
             if (userService.isUserAdmin(currentUser)) {
