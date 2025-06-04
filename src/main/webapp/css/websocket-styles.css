@@ -1,3 +1,5 @@
+/* ===== MAIN AUCTION SYSTEM THEME ===== */
+
 * {
     margin: 0;
     padding: 0;
@@ -54,6 +56,7 @@ body {
     gap: 20px;
 }
 
+/* Enhanced Auction ID Selector - Updated for consistency */
 .form-container {
     margin: 0;
     padding: 20px;
@@ -66,6 +69,9 @@ body {
     margin-bottom: 20px;
     color: #333;
     font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .controls-grid {
@@ -84,16 +90,87 @@ body {
     font-weight: bold;
     margin-bottom: 5px;
     color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.form-group input {
-    padding: 10px;
-    width: 100%;
-    box-sizing: border-box;
+/* Enhanced Auction ID Input */
+.auction-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: white;
     border: 1px solid #ddd;
     border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+.auction-input-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    padding: 8px 12px;
+    gap: 8px;
+}
+
+.auction-input-icon {
+    color: #007bff;
+    font-size: 1rem;
+}
+
+#auction-id {
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    color: #333;
+    background: transparent;
+    flex: 1;
+    text-align: center;
+    min-width: 80px;
+    padding: 2px 8px;
+}
+
+#auction-id::-webkit-outer-spin-button,
+#auction-id::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#auction-id[type=number] {
+    -moz-appearance: textfield;
+}
+
+.auction-controls {
+    display: flex;
+    background: #f8f9fa;
+    border-left: 1px solid #ddd;
+}
+
+.auction-btn {
+    background: #007bff;
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.auction-btn:hover {
+    background: #0056b3;
+}
+
+.auction-btn:first-child {
+    border-right: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Button Styles - Consistent with main theme */
 .btn {
     background-color: #007bff;
     color: white;
@@ -113,6 +190,12 @@ body {
 .btn:hover {
     background-color: #0056b3;
     transform: translateY(-1px);
+}
+
+.btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .btn-success {
@@ -139,6 +222,7 @@ body {
     background-color: #5a6268;
 }
 
+/* Status Indicator */
 .status {
     background-color: #e7f3ff;
     padding: 15px;
@@ -198,6 +282,7 @@ body {
     100% { box-shadow: 0 0 0 0 transparent; }
 }
 
+/* Auction Info */
 .auction-info {
     background-color: #f8f9fa;
     padding: 20px;
@@ -210,6 +295,13 @@ body {
     color: #333;
     margin-bottom: 20px;
     font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.current-auction-id {
+    margin-bottom: 20px;
 }
 
 .bid-display {
@@ -238,21 +330,30 @@ body {
     font-size: 1.4rem;
     font-weight: bold;
     color: #333;
+    transition: all 0.3s ease;
 }
 
+/* Bid History */
 .bid-history {
     background-color: #f8f9fa;
     border-radius: 8px;
     padding: 20px;
     border-left: 4px solid #007bff;
-    max-height: 400px;
-    overflow-y: auto;
+    flex: 1;
 }
 
 .bid-history h3 {
     color: #333;
     margin-bottom: 20px;
     font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#bid-history {
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .bid-item {
@@ -300,27 +401,33 @@ body {
     font-size: 0.9rem;
 }
 
+/* Notifications Container */
 .notifications-container {
     background-color: #f8f9fa;
     border-radius: 8px;
-    padding: 20px;
     border-left: 4px solid #007bff;
-    max-height: 400px;
-    overflow-y: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .notifications-header {
+    background-color: #f8f9fa;
+    padding: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
     border-bottom: 2px solid #ddd;
 }
 
 .notifications-header h3 {
     color: #333;
+    margin: 0;
     font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .badge {
@@ -329,6 +436,17 @@ body {
     padding: 3px 8px;
     border-radius: 3px;
     font-size: 12px;
+}
+
+/* Enhanced System Events with more height */
+#notifications {
+    background-color: #f8f9fa;
+    padding: 20px;
+    height: 60vh;
+    min-height: 400px;
+    max-height: 70vh;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .notification {
@@ -407,6 +525,93 @@ body {
     color: #333;
 }
 
+/* Social Media Section - Updated to match theme */
+.social-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    border-left: 4px solid #007bff;
+    border: 1px solid #ddd;
+}
+
+.social-header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ddd;
+}
+
+.social-header h3 {
+    color: #333;
+    margin: 0 0 8px 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.social-header p {
+    color: #6c757d;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.social-badges {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.social-badge {
+    display: inline-block;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.social-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+.social-badge img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Developer Info */
+.developer-info {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.developer-info .dev-name {
+    color: #333;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+.developer-info .dev-role {
+    color: #007bff;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.developer-info .dev-date {
+    color: #6c757d;
+    font-size: 0.8rem;
+}
+
 /* Toast Notifications for Bid Updates */
 .bid-notification {
     position: fixed;
@@ -462,6 +667,7 @@ body {
     color: white;
 }
 
+/* Empty State */
 .empty-state {
     text-align: center;
     padding: 40px 20px;
@@ -475,24 +681,24 @@ body {
 }
 
 /* Scrollbar styling */
-.notifications-container::-webkit-scrollbar,
+#notifications::-webkit-scrollbar,
 .bid-history::-webkit-scrollbar {
     width: 8px;
 }
 
-.notifications-container::-webkit-scrollbar-track,
+#notifications::-webkit-scrollbar-track,
 .bid-history::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
 }
 
-.notifications-container::-webkit-scrollbar-thumb,
+#notifications::-webkit-scrollbar-thumb,
 .bid-history::-webkit-scrollbar-thumb {
     background: #007bff;
     border-radius: 4px;
 }
 
-.notifications-container::-webkit-scrollbar-thumb:hover,
+#notifications::-webkit-scrollbar-thumb:hover,
 .bid-history::-webkit-scrollbar-thumb:hover {
     background: #0056b3;
 }
@@ -523,5 +729,19 @@ body {
     .bid-notification {
         right: -350px;
         min-width: 300px;
+    }
+
+    .social-badges {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
+    }
+
+    .social-section {
+        padding: 16px;
+    }
+
+    #notifications {
+        height: 50vh;
+        min-height: 300px;
     }
 }
