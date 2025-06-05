@@ -8,6 +8,7 @@ import com.auction.entity.Bid;
 import com.auction.entity.User;
 import com.auction.session.UserSessionManagerRemote;
 import com.auction.session.ActiveSessionInfo;
+import com.auction.util.HtmlHelper;
 import jakarta.ejb.*;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.*;
@@ -46,7 +47,7 @@ public class AuctionServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws IOException {
 
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
@@ -62,7 +63,7 @@ public class AuctionServlet extends HttpServlet {
                     Long auctionId = Long.parseLong(auctionIdStr);
                     showAuctionDetails(request, out, auctionId);
                 } catch (NumberFormatException e) {
-                    showError(out, "Invalid auction ID");
+                    HtmlHelper.writeErrorPage(out, "Invalid auction ID");
                 }
             } else if (pathInfo.equals("/users")) {
                 showUserList(out);
@@ -75,17 +76,17 @@ public class AuctionServlet extends HttpServlet {
             } else if (pathInfo.equals("/change-password")) {
                 showChangePasswordForm(request, out);
             } else {
-                showError(out, "Page not found");
+                HtmlHelper.writeErrorPage(out, "Page not found");
             }
         } catch (Exception e) {
             logger.severe("Error processing request: " + e.getMessage());
-            showError(out, "Internal server error: " + e.getMessage());
+            HtmlHelper.writeErrorPage(out, "Internal server error: " + e.getMessage());
         }
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+            throws IOException {
 
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
@@ -106,47 +107,16 @@ public class AuctionServlet extends HttpServlet {
             } else if (pathInfo != null && pathInfo.equals("/change-password")) {
                 handlePasswordChange(request, response, out);
             } else {
-                showError(out, "Invalid POST request");
+                HtmlHelper.writeErrorPage(out, "Invalid POST request");
             }
         } catch (Exception e) {
             logger.severe("Error processing POST request: " + e.getMessage());
-            showError(out, "Internal server error: " + e.getMessage());
+            HtmlHelper.writeErrorPage(out, "Internal server error: " + e.getMessage());
         }
     }
 
     private void showAuctionList(HttpServletRequest request, PrintWriter out) {
-        out.println("<html><head><title>Online Auction System</title>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        out.println("<style>");
-        out.println("body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }");
-        out.println(".container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
-        out.println("table { border-collapse: collapse; width: 100%; margin: 20px 0; }");
-        out.println("th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }");
-        out.println("th { background-color: #007bff; color: white; }");
-        out.println(".form-container { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f8f9fa; }");
-        out.println(".status { background-color: #e7f3ff; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #007bff; }");
-        out.println(".user-info { background-color: #d4edda; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #28a745; }");
-        out.println(".logout-btn { background-color: #dc3545; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }");
-        out.println(".nav-link { margin-right: 20px; color: #007bff; text-decoration: none; font-weight: 500; }");
-        out.println(".nav-link:hover { text-decoration: underline; }");
-        out.println(".form-group { margin: 15px 0; }");
-        out.println(".form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; }");
-        out.println(".form-group input, .form-group textarea { padding: 10px; width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }");
-        out.println(".btn { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; }");
-        out.println(".btn:hover { background-color: #0056b3; }");
-        out.println(".btn-success { background-color: #28a745; }");
-        out.println(".btn-success:hover { background-color: #218838; }");
-        out.println(".error-msg { color: #721c24; background-color: #f8d7da; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #dc3545; }");
-        out.println(".success-msg { color: #155724; background-color: #d4edda; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #28a745; }");
-        out.println(".admin-badge { background-color: #dc3545; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 10px; }");
-        out.println(".admin-link { color: #dc3545 !important; font-weight: bold; }");
-        out.println(".header { text-align: center; margin-bottom: 30px; }");
-        out.println(".header h1 { color: #333; margin-bottom: 10px; }");
-        out.println(".nav-bar { background-color: #343a40; padding: 15px; margin: -20px -20px 20px -20px; border-radius: 10px 10px 0 0; }");
-        out.println(".nav-bar a { color: white; text-decoration: none; margin-right: 20px; padding: 8px 12px; border-radius: 4px; }");
-        out.println(".nav-bar a:hover { background-color: #495057; }");
-        out.println("</style></head><body>");
+        HtmlHelper.writeHtmlHead(out, "Online Auction System");
 
         out.println("<div class='container'>");
 
@@ -157,6 +127,40 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>");
 
         // Show messages if any
+        showMessages(request, out);
+
+        // Show user session info if logged in
+        String currentUser = getCurrentUser(request);
+        if (currentUser != null) {
+            showUserInfoBar(request, out, currentUser);
+        }
+
+        // Navigation
+        HtmlHelper.writeNavigation(out, currentUser, currentUser != null && userService.isUserAdmin(currentUser));
+
+        // System Status Summary
+        showSystemStatusSummary(out);
+
+        // Login/Registration Forms (only show if not logged in)
+        if (currentUser == null) {
+            showLoginForm(out);
+            showRegistrationForm(out);
+        }
+
+        // Auction Creation Form (only show if logged in)
+        if (currentUser != null) {
+            showAuctionCreationForm(out);
+        }
+
+        // Active Auctions List
+        showActiveAuctionsList(out, currentUser != null);
+
+        out.println("</div>"); // Close container
+
+        HtmlHelper.writeHtmlFooter(out);
+    }
+
+    private void showMessages(HttpServletRequest request, PrintWriter out) {
         String error = request.getParameter("error");
         String message = request.getParameter("message");
 
@@ -198,68 +202,6 @@ public class AuctionServlet extends HttpServlet {
             }
             out.println("</div>");
         }
-
-        // Show user session info if logged in
-        String currentUser = getCurrentUser(request);
-        if (currentUser != null) {
-            showUserInfoBar(request, out, currentUser);
-        }
-
-        // Navigation
-        out.println("<div class='nav-bar'>");
-        out.println("<a href='/AuctionSystem/auction/' class='nav-link'>🏠 Home</a>");
-        out.println("<a href='/AuctionSystem/auction/users' class='nav-link'>👥 Users</a>");
-        out.println("<a href='/AuctionSystem/auction/status' class='nav-link'>📊 System Status</a>");
-        out.println("<a href='/AuctionSystem/auction/sessions' class='nav-link'>🔐 Sessions</a>");
-        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'>🔔 Notifications</a>");
-        if (currentUser != null) {
-            out.println("<a href='/AuctionSystem/auction/profile' class='nav-link'>👤 Profile</a>");
-            if (userService.isUserAdmin(currentUser)) {
-                out.println("<a href='/AuctionSystem/auction/admin/sessions/' class='nav-link admin-link'>🔧 Admin Panel</a>");
-            }
-        }
-        out.println("</div>");
-
-        // System Status Summary
-        int activeAuctions = auctionService.getActiveAuctionCount();
-        int activeUsers = userService.getActiveUserCount();
-        int activeSessions = sessionManager.getActiveSessionCount();
-
-        out.println("<div class='status'>");
-        out.println("<strong>📈 System Status:</strong> ");
-        out.println(activeAuctions + " active auctions • " + activeUsers + " registered users • " +
-                activeSessions + " active sessions");
-        out.println("<br><small>Last updated: " + LocalDateTime.now().format(formatter) + " UTC</small>");
-        out.println("</div>");
-
-        // Login/Registration Forms (only show if not logged in)
-        if (currentUser == null) {
-            showLoginForm(out);
-            showRegistrationForm(out);
-        }
-
-        // Auction Creation Form (only show if logged in)
-        if (currentUser != null) {
-            showAuctionCreationForm(out);
-        }
-
-        // Active Auctions List
-        showActiveAuctionsList(out, currentUser != null);
-
-        out.println("</div>"); // Close container
-        out.println("<footer style=\"text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #ddd; background-color: #f8f9fa;\">");
-        out.println("<div style=\"color: #666; font-size: 14px;\">");
-        out.println("<p>&copy; 2025 <strong>Ishara Lakshitha</strong>. All rights reserved.</p>");
-        out.println("<p style=\"margin: 5px 0;\">");
-        out.println("<i class=\"fas fa-code\"></i>");
-        out.println("Developed by <a href=\"https://github.com/isharax9\" target=\"_blank\" style=\"color: #007bff; text-decoration: none;\">@isharax9</a>");
-        out.println("</p>");
-        out.println("<p style=\"margin: 0; font-size: 12px; color: #888;\">");
-        out.println("Auction System Dashboard | BCD 1 Research Assignment");
-        out.println("</p>");
-        out.println("</div>");
-        out.println("</footer>");
-        out.println("</body></html>");
     }
 
     private void showUserInfoBar(HttpServletRequest request, PrintWriter out, String username) {
@@ -287,6 +229,19 @@ public class AuctionServlet extends HttpServlet {
         out.println("| <form method='post' action='/AuctionSystem/auction/logout' style='display: inline;'>");
         out.println("<button type='submit' class='logout-btn'>🚪 Logout</button>");
         out.println("</form>");
+        out.println("</div>");
+    }
+
+    private void showSystemStatusSummary(PrintWriter out) {
+        int activeAuctions = auctionService.getActiveAuctionCount();
+        int activeUsers = userService.getActiveUserCount();
+        int activeSessions = sessionManager.getActiveSessionCount();
+
+        out.println("<div class='status'>");
+        out.println("<strong>📈 System Status:</strong> ");
+        out.println(activeAuctions + " active auctions • " + activeUsers + " registered users • " +
+                activeSessions + " active sessions");
+        out.println("<br><small>Last updated: " + LocalDateTime.now().format(formatter) + " UTC</small>");
         out.println("</div>");
     }
 
@@ -413,36 +368,15 @@ public class AuctionServlet extends HttpServlet {
         AuctionDTO auction = auctionService.getAuction(auctionId);
 
         if (auction == null) {
-            showError(out, "Auction not found");
+            HtmlHelper.writeErrorPage(out, "Auction not found");
             return;
         }
 
         String currentUser = getCurrentUser(request);
 
-        out.println("<html><head><title>Auction: " + auction.getTitle() + "</title>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        out.println("<style>");
-        out.println("body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }");
-        out.println(".container { max-width: 1000px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
-        out.println("table { border-collapse: collapse; width: 100%; margin: 20px 0; }");
-        out.println("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }");
-        out.println("th { background-color: #007bff; color: white; }");
-        out.println(".bid-form { margin: 20px 0; padding: 20px; border: 1px solid #28a745; border-radius: 8px; background-color: #f8fff9; }");
-        out.println(".auction-info { background-color: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #007bff; }");
-        out.println(".user-info { background-color: #d4edda; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #28a745; }");
-        out.println(".logout-btn { background-color: #dc3545; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }");
-        out.println(".btn { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }");
-        out.println(".btn:hover { background-color: #0056b3; }");
-        out.println(".btn-success { background-color: #28a745; }");
-        out.println(".btn-success:hover { background-color: #218838; }");
-        out.println(".admin-badge { background-color: #dc3545; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; margin-left: 10px; }");
-        out.println(".status-active { color: #28a745; font-weight: bold; }");
-        out.println(".status-ended { color: #dc3545; font-weight: bold; }");
-        out.println(".winning-bid { background-color: #d4edda; }");
-        out.println("</style></head><body>");
+        HtmlHelper.writeHtmlHead(out, "Auction: " + auction.getTitle(), "auction-details.css");
 
-        out.println("<div class='container'>");
+        out.println("<div class='container auction-details-container'>");
         out.println("<h1>🏺 " + auction.getTitle() + "</h1>");
         out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
 
@@ -469,29 +403,15 @@ public class AuctionServlet extends HttpServlet {
         // Bidding Form (only if auction is active and user is logged in)
         if (auction.isActive() && !isExpired) {
             if (currentUser != null) {
-                double minimumBid = auction.getCurrentHighestBid() + 5.0;
-                out.println("<div class='bid-form'>");
-                out.println("<h3>💰 Place Your Bid</h3>");
-                out.println("<p><strong>Minimum bid:</strong> $" + String.format("%.2f", minimumBid) + "</p>");
-                out.println("<form method='post' action='/AuctionSystem/auction/bid'>");
-                out.println("<input type='hidden' name='auctionId' value='" + auctionId + "'>");
-                out.println("<input type='hidden' name='username' value='" + currentUser + "'>");
-                out.println("<div style='display: flex; align-items: center; gap: 10px;'>");
-                out.println("<label for='bidAmount'><strong>Bid Amount: $</strong></label>");
-                out.println("<input type='number' id='bidAmount' name='bidAmount' step='0.01' min='" +
-                        (minimumBid + 0.01) + "' required style='padding: 10px; border: 1px solid #ddd; border-radius: 4px;'>");
-                out.println("<input type='submit' value='Place Bid' class='btn btn-success'>");
-                out.println("</div>");
-                out.println("</form>");
-                out.println("</div>");
+                showBiddingForm(out, auctionId, auction.getCurrentHighestBid(), currentUser);
             } else {
-                out.println("<div class='bid-form'>");
+                out.println("<div class='login-required-notice'>");
                 out.println("<h3>💰 Login Required to Bid</h3>");
                 out.println("<p>Please <a href='/AuctionSystem/auction/' class='btn'>login</a> to place a bid on this auction.</p>");
                 out.println("</div>");
             }
         } else if (isExpired) {
-            out.println("<div style='background-color: #f8d7da; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #dc3545;'>");
+            out.println("<div class='auction-ended-notice'>");
             out.println("<h3>⏰ Auction Ended</h3>");
             out.println("<p>This auction has ended. No more bids can be placed.</p>");
             if (auction.getCurrentHighestBidder() != null) {
@@ -505,7 +425,26 @@ public class AuctionServlet extends HttpServlet {
         showBidHistory(out, auctionId);
 
         out.println("</div>"); // Close container
-        out.println("</body></html>");
+
+        HtmlHelper.writeHtmlFooter(out);
+    }
+
+    private void showBiddingForm(PrintWriter out, Long auctionId, double currentHighestBid, String currentUser) {
+        double minimumBid = currentHighestBid + 5.0;
+        out.println("<div class='bid-form'>");
+        out.println("<h3>💰 Place Your Bid</h3>");
+        out.println("<p><strong>Minimum bid:</strong> $" + String.format("%.2f", minimumBid) + "</p>");
+        out.println("<form method='post' action='/AuctionSystem/auction/bid'>");
+        out.println("<input type='hidden' name='auctionId' value='" + auctionId + "'>");
+        out.println("<input type='hidden' name='username' value='" + currentUser + "'>");
+        out.println("<div class='bid-input-group'>");
+        out.println("<label for='bidAmount'><strong>Bid Amount: $</strong></label>");
+        out.println("<input type='number' id='bidAmount' name='bidAmount' step='0.01' min='" +
+                (minimumBid + 0.01) + "' required>");
+        out.println("<input type='submit' value='Place Bid' class='btn btn-success'>");
+        out.println("</div>");
+        out.println("</form>");
+        out.println("</div>");
     }
 
     private void showBidHistory(PrintWriter out, Long auctionId) {
@@ -537,24 +476,13 @@ public class AuctionServlet extends HttpServlet {
     private void showChangePasswordForm(HttpServletRequest request, PrintWriter out) {
         String currentUser = getCurrentUser(request);
         if (currentUser == null) {
-            showError(out, "Please login to change your password.");
+            HtmlHelper.writeErrorPage(out, "Please login to change your password.");
             return;
         }
 
-        out.println("<html><head><title>Change Password</title>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<style>");
-        out.println("body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }");
-        out.println(".container { max-width: 500px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
-        out.println(".form-group { margin: 20px 0; }");
-        out.println(".form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #333; }");
-        out.println(".form-group input { padding: 12px; width: 100%; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }");
-        out.println(".btn { background-color: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }");
-        out.println(".btn:hover { background-color: #0056b3; }");
-        out.println(".error-msg { color: #721c24; background-color: #f8d7da; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #dc3545; }");
-        out.println("</style></head><body>");
+        HtmlHelper.writeHtmlHead(out, "Change Password");
 
-        out.println("<div class='container'>");
+        out.println("<div class='container' style='max-width: 500px;'>");
         out.println("<h1>🔑 Change Password</h1>");
         out.println("<a href='/AuctionSystem/auction/'>← Back to Main Page</a><hr>");
 
@@ -595,18 +523,19 @@ public class AuctionServlet extends HttpServlet {
         out.println("<input type='password' id='confirm_password' name='confirmPassword' required minlength='4'>");
         out.println("</div>");
         out.println("<div class='form-group'>");
-        out.println("<input type='submit' value='Change Password' class='btn'>");
+        out.println("<input type='submit' value='Change Password' class='btn' style='width: 100%;'>");
         out.println("</div>");
         out.println("</form>");
 
         out.println("</div>");
-        out.println("</body></html>");
+
+        HtmlHelper.writeHtmlFooter(out);
     }
 
     private void handlePasswordChange(HttpServletRequest request, HttpServletResponse response, PrintWriter out) throws IOException {
         String currentUser = getCurrentUser(request);
         if (currentUser == null) {
-            showError(out, "Please login to change your password.");
+            HtmlHelper.writeErrorPage(out, "Please login to change your password.");
             return;
         }
 
@@ -644,16 +573,9 @@ public class AuctionServlet extends HttpServlet {
     }
 
     private void showSessionStatus(HttpServletRequest request, PrintWriter out) {
-        out.println("<html><head><title>Session Status</title>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<style>");
-        out.println("body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }");
-        out.println(".container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
-        out.println(".status-card { background-color: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #007bff; }");
-        out.println(".btn { background-color: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; }");
-        out.println("</style></head><body>");
+        HtmlHelper.writeHtmlHead(out, "Session Status");
 
-        out.println("<div class='container'>");
+        out.println("<div class='container' style='max-width: 800px;'>");
         out.println("<h1>🔐 Session Status</h1>");
         out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
 
@@ -692,30 +614,20 @@ public class AuctionServlet extends HttpServlet {
         }
 
         out.println("</div>");
-        out.println("</body></html>");
+
+        HtmlHelper.writeHtmlFooter(out);
     }
 
     private void showUserProfile(HttpServletRequest request, PrintWriter out) {
         String currentUser = getCurrentUser(request);
         if (currentUser == null) {
-            showError(out, "Please login to view your profile.");
+            HtmlHelper.writeErrorPage(out, "Please login to view your profile.");
             return;
         }
 
-        out.println("<html><head><title>User Profile</title>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<style>");
-        out.println("body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }");
-        out.println(".container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
-        out.println("table { border-collapse: collapse; width: 100%; }");
-        out.println("th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }");
-        out.println("th { background-color: #007bff; color: white; }");
-        out.println(".profile-card { background-color: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #007bff; }");
-        out.println(".btn { background-color: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; }");
-        out.println(".admin-badge { background-color: #dc3545; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; }");
-        out.println("</style></head><body>");
+        HtmlHelper.writeHtmlHead(out, "User Profile");
 
-        out.println("<div class='container'>");
+        out.println("<div class='container' style='max-width: 800px;'>");
         out.println("<h1>👤 User Profile</h1>");
         out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
 
@@ -760,7 +672,8 @@ public class AuctionServlet extends HttpServlet {
         }
 
         out.println("</div>");
-        out.println("</body></html>");
+
+        HtmlHelper.writeHtmlFooter(out);
     }
 
     private void handleBidSubmission(HttpServletRequest request, PrintWriter out) {
@@ -771,7 +684,7 @@ public class AuctionServlet extends HttpServlet {
         // Validate session first
         String currentUser = getCurrentUser(request);
         if (currentUser == null || !currentUser.equals(username)) {
-            showError(out, "Session expired or invalid. Please login again.");
+            HtmlHelper.writeErrorPage(out, "Session expired or invalid. Please login again.");
             return;
         }
 
@@ -786,23 +699,19 @@ public class AuctionServlet extends HttpServlet {
 
             if (success) {
                 // Redirect to auction details page
-                out.println("<html><head>");
-                out.println("<meta http-equiv='refresh' content='3;url=/AuctionSystem/auction/auction/" + auctionId + "'>");
-                out.println("<style>body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }</style>");
-                out.println("</head><body>");
-                out.println("<div style='background-color: white; padding: 40px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block;'>");
-                out.println("<h2>✅ Bid Placed Successfully!</h2>");
-                out.println("<p>Your bid of <strong>$" + String.format("%.2f", bidAmount) + "</strong> has been placed on auction #" + auctionId + ".</p>");
-                out.println("<p>Redirecting to auction details...</p>");
-                out.println("<a href='/AuctionSystem/auction/auction/" + auctionId + "' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;'>View Auction Now</a>");
-                out.println("</div>");
-                out.println("</body></html>");
+                HtmlHelper.writeSuccessPage(
+                        out,
+                        "Bid Placed Successfully!",
+                        "Your bid of $" + String.format("%.2f", bidAmount) + " has been placed on auction #" + auctionId + ".",
+                        "/AuctionSystem/auction/auction/" + auctionId,
+                        3
+                );
             } else {
-                showError(out, "Bid placement failed. Please check if your bid meets the minimum requirements.");
+                HtmlHelper.writeErrorPage(out, "Bid placement failed. Please check if your bid meets the minimum requirements.");
             }
 
         } catch (NumberFormatException e) {
-            showError(out, "Invalid bid amount or auction ID");
+            HtmlHelper.writeErrorPage(out, "Invalid bid amount or auction ID");
         }
     }
 
@@ -872,32 +781,27 @@ public class AuctionServlet extends HttpServlet {
 
         if (username == null || email == null || password == null ||
                 username.trim().isEmpty() || email.trim().isEmpty() || password.trim().isEmpty()) {
-            showError(out, "All fields are required for registration.");
+            HtmlHelper.writeErrorPage(out, "All fields are required for registration.");
             return;
         }
 
         if (password.length() < 4) {
-            showError(out, "Password must be at least 4 characters long.");
+            HtmlHelper.writeErrorPage(out, "Password must be at least 4 characters long.");
             return;
         }
 
         User user = userService.registerUser(username, email, password);
 
         if (user != null) {
-            out.println("<html><head>");
-            out.println("<meta http-equiv='refresh' content='3;url=/AuctionSystem/auction/'>");
-            out.println("<style>body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }</style>");
-            out.println("</head><body>");
-            out.println("<div style='background-color: white; padding: 40px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block;'>");
-            out.println("<h2>✅ Registration Successful!</h2>");
-            out.println("<p>Welcome, <strong>" + username + "</strong>! Your account has been created successfully.</p>");
-            out.println("<p>You can now login with your credentials to participate in auctions.</p>");
-            out.println("<p>Redirecting to main page...</p>");
-            out.println("<a href='/AuctionSystem/auction/' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;'>Go to Main Page</a>");
-            out.println("</div>");
-            out.println("</body></html>");
+            HtmlHelper.writeSuccessPage(
+                    out,
+                    "Registration Successful!",
+                    "Welcome, " + username + "! Your account has been created successfully. You can now login with your credentials to participate in auctions.",
+                    "/AuctionSystem/auction/",
+                    3
+            );
         } else {
-            showError(out, "Registration failed. Username might already exist or password requirements not met.");
+            HtmlHelper.writeErrorPage(out, "Registration failed. Username might already exist or password requirements not met.");
         }
     }
 
@@ -905,7 +809,7 @@ public class AuctionServlet extends HttpServlet {
         // Validate session first
         String currentUser = getCurrentUser(request);
         if (currentUser == null) {
-            showError(out, "Please login to create auctions.");
+            HtmlHelper.writeErrorPage(out, "Please login to create auctions.");
             return;
         }
 
@@ -916,7 +820,7 @@ public class AuctionServlet extends HttpServlet {
 
         if (title == null || description == null || startingPriceStr == null || durationStr == null ||
                 title.trim().isEmpty() || description.trim().isEmpty()) {
-            showError(out, "All fields are required to create an auction.");
+            HtmlHelper.writeErrorPage(out, "All fields are required to create an auction.");
             return;
         }
 
@@ -925,12 +829,12 @@ public class AuctionServlet extends HttpServlet {
             int durationHours = Integer.parseInt(durationStr);
 
             if (startingPrice <= 0) {
-                showError(out, "Starting price must be greater than 0.");
+                HtmlHelper.writeErrorPage(out, "Starting price must be greater than 0.");
                 return;
             }
 
             if (durationHours < 1 || durationHours > 168) {
-                showError(out, "Duration must be between 1 and 168 hours (7 days).");
+                HtmlHelper.writeErrorPage(out, "Duration must be between 1 and 168 hours (7 days).");
                 return;
             }
 
@@ -942,44 +846,28 @@ public class AuctionServlet extends HttpServlet {
             AuctionDTO auction = auctionService.createAuction(title, description, startingPrice, endTime);
 
             if (auction != null) {
-                out.println("<html><head>");
-                out.println("<meta http-equiv='refresh' content='3;url=/AuctionSystem/auction/auction/" +
-                        auction.getAuctionId() + "'>");
-                out.println("<style>body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #f5f5f5; }</style>");
-                out.println("</head><body>");
-                out.println("<div style='background-color: white; padding: 40px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block;'>");
-                out.println("<h2>✅ Auction Created Successfully!</h2>");
-                out.println("<p>Auction '<strong>" + title + "</strong>' has been created with ID: <strong>#" + auction.getAuctionId() + "</strong></p>");
-                out.println("<p>Starting price: $" + String.format("%.2f", startingPrice) + "</p>");
-                out.println("<p>Duration: " + durationHours + " hours</p>");
-                out.println("<p>Redirecting to auction details...</p>");
-                out.println("<a href='/AuctionSystem/auction/auction/" + auction.getAuctionId() +
-                        "' style='background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;'>View Auction</a>");
-                out.println("</div>");
-                out.println("</body></html>");
+                HtmlHelper.writeSuccessPage(
+                        out,
+                        "Auction Created Successfully!",
+                        "Auction '" + title + "' has been created with ID: #" + auction.getAuctionId() +
+                                ". Starting price: $" + String.format("%.2f", startingPrice) +
+                                ". Duration: " + durationHours + " hours.",
+                        "/AuctionSystem/auction/auction/" + auction.getAuctionId(),
+                        3
+                );
             } else {
-                showError(out, "Failed to create auction. Please try again.");
+                HtmlHelper.writeErrorPage(out, "Failed to create auction. Please try again.");
             }
 
         } catch (NumberFormatException e) {
-            showError(out, "Invalid starting price or duration. Please enter valid numbers.");
+            HtmlHelper.writeErrorPage(out, "Invalid starting price or duration. Please enter valid numbers.");
         }
     }
 
     private void showUserList(PrintWriter out) {
-        out.println("<html><head><title>Active Users</title>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<style>");
-        out.println("body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }");
-        out.println(".container { max-width: 1000px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
-        out.println("table { border-collapse: collapse; width: 100%; }");
-        out.println("th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }");
-        out.println("th { background-color: #007bff; color: white; }");
-        out.println(".btn { background-color: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; }");
-        out.println(".admin-badge { background-color: #dc3545; color: white; padding: 3px 8px; border-radius: 3px; font-size: 12px; }");
-        out.println("</style></head><body>");
+        HtmlHelper.writeHtmlHead(out, "Active Users");
 
-        out.println("<div class='container'>");
+        out.println("<div class='container' style='max-width: 1000px;'>");
         out.println("<h1>👥 Active Users</h1>");
         out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
 
@@ -1006,20 +894,14 @@ public class AuctionServlet extends HttpServlet {
         }
 
         out.println("</div>");
-        out.println("</body></html>");
+
+        HtmlHelper.writeHtmlFooter(out);
     }
 
     private void showSystemStatus(PrintWriter out) {
-        out.println("<html><head><title>System Status</title>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<style>");
-        out.println("body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }");
-        out.println(".container { max-width: 1000px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }");
-        out.println(".status-card { background-color: #f8f9fa; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #007bff; }");
-        out.println(".btn { background-color: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; }");
-        out.println("</style></head><body>");
+        HtmlHelper.writeHtmlHead(out, "System Status");
 
-        out.println("<div class='container'>");
+        out.println("<div class='container' style='max-width: 1000px;'>");
         out.println("<h1>📊 System Status</h1>");
         out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
 
@@ -1047,6 +929,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p>✅ AuctionManager (Singleton EJB) - Active</p>");
         out.println("<p>✅ BidNotificationMDB (Message-Driven Bean) - Active</p>");
         out.println("</div>");
+
         out.println("<div class='status-card'>");
         out.println("<h3>📡 Services & Security Status</h3>");
         out.println("<p>✅ JMS Messaging - Active</p>");
@@ -1066,23 +949,8 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>");
 
         out.println("</div>");
-        out.println("</body></html>");
-    }
 
-    private void showError(PrintWriter out, String errorMessage) {
-        out.println("<html><head><title>Error</title>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<style>");
-        out.println("body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; text-align: center; }");
-        out.println(".error-container { max-width: 600px; margin: 50px auto; background-color: white; padding: 40px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-left: 4px solid #dc3545; }");
-        out.println(".btn { background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin-top: 20px; }");
-        out.println("</style></head><body>");
-        out.println("<div class='error-container'>");
-        out.println("<h1>❌ Error</h1>");
-        out.println("<p style='font-size: 18px; color: #721c24;'>" + errorMessage + "</p>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Home</a>");
-        out.println("</div>");
-        out.println("</body></html>");
+        HtmlHelper.writeHtmlFooter(out);
     }
 
     // Helper methods for session management

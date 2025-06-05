@@ -1,0 +1,49 @@
+/* Auction Details Specific Styles */
+.auction-details-container {
+    max-width: 1000px;
+}
+
+.bid-form h3 {
+    color: #28a745;
+    margin-bottom: 15px;
+}
+
+.bid-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.bid-input-group input[type="number"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 200px;
+}
+
+.auction-ended-notice {
+    background-color: #f8d7da;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    border-left: 4px solid #dc3545;
+}
+
+.login-required-notice {
+    background-color: #fff3cd;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 8px;
+    border-left: 4px solid #ffc107;
+}
+
+.auction-ended-notice h3 {
+    color: #721c24;
+    margin-bottom: 10px;
+}
+
+.login-required-notice h3 {
+    color: #856404;
+    margin-bottom: 10px;
+}
