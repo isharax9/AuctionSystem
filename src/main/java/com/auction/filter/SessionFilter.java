@@ -72,6 +72,7 @@ public class SessionFilter implements Filter {
                 requestURI.contains("/css/") ||
                 requestURI.contains("/js/") ||
                 requestURI.contains("/images/") ||
+                requestURI.endsWith("/status") ||
                 requestURI.equals("/AuctionSystem/auction/");  // Allow main page
     }
 
