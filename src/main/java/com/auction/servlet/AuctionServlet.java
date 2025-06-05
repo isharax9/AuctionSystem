@@ -247,6 +247,18 @@ public class AuctionServlet extends HttpServlet {
         showActiveAuctionsList(out, currentUser != null);
 
         out.println("</div>"); // Close container
+        out.println("<footer style=\"text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #ddd; background-color: #f8f9fa;\">");
+        out.println("<div style=\"color: #666; font-size: 14px;\">");
+        out.println("<p>&copy; 2025 <strong>Ishara Lakshitha</strong>. All rights reserved.</p>");
+        out.println("<p style=\"margin: 5px 0;\">");
+        out.println("<i class=\"fas fa-code\"></i>");
+        out.println("Developed by <a href=\"https://github.com/isharax9\" target=\"_blank\" style=\"color: #007bff; text-decoration: none;\">@isharax9</a>");
+        out.println("</p>");
+        out.println("<p style=\"margin: 0; font-size: 12px; color: #888;\">");
+        out.println("Auction System Dashboard | BCD 1 Research Assignment");
+        out.println("</p>");
+        out.println("</div>");
+        out.println("</footer>");
         out.println("</body></html>");
     }
 
