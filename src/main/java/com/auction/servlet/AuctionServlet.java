@@ -2,14 +2,15 @@ package com.auction.servlet;
 
 import com.auction.dto.AuctionDTO;
 import com.auction.dto.BidDTO;
+import com.auction.ejb.*;
+import com.auction.entity.Auction;
 import com.auction.entity.Bid;
-import com.auction.ejb.AuctionServiceRemote;
-import com.auction.ejb.BidServiceRemote;
-import com.auction.ejb.UserServiceRemote;
+import com.auction.entity.User;
 import com.auction.session.UserSessionManagerRemote;
-import jakarta.ejb.EJB;
+import com.auction.session.ActiveSessionInfo;
+import jakarta.ejb.*;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.annotation.*;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +23,22 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+ * Enhanced Online Auction System Servlet
+ * Merged V1 and V2 functionalities for comprehensive auction management
+ *
+ * Copyright (c) 2025 Ishara Lakshitha (@isharax9). All rights reserved.
+ *
+ * Features:
+ * - Complete session management with security
+ * - Admin panel with role-based access
+ * - User profile and password management
+ * - Enhanced auction creation with hour/minute precision
+ * - Auction history (completed auctions) display
+ * - Real-time WebSocket integration
+ * - Comprehensive error handling and validation
+ * - Enhanced UI with responsive design
+ */
 @WebServlet(name = "AuctionServlet", urlPatterns = {"/auction/*"})
 public class AuctionServlet extends HttpServlet {
 
@@ -38,6 +55,9 @@ public class AuctionServlet extends HttpServlet {
     private UserServiceRemote userService;
 
     @EJB
+    private AuctionManagerSingleton auctionManager;
+
+    @EJB
     private UserSessionManagerRemote sessionManager;
 
     @Override
@@ -52,22 +72,36 @@ public class AuctionServlet extends HttpServlet {
         try {
             if (pathInfo == null || pathInfo.equals("/")) {
                 showMainAuctionPage(request, out);
+            } else if (pathInfo.startsWith("/auction/")) {
+                String auctionIdStr = pathInfo.substring("/auction/".length());
+                try {
+                    Long auctionId = Long.parseLong(auctionIdStr);
+                    showAuctionDetails(request, out, auctionId);
+                } catch (NumberFormatException e) {
+                    showError(out, "Invalid auction ID", "Please provide a valid auction ID.");
+                }
             } else if (pathInfo.startsWith("/view/")) {
                 String auctionIdStr = pathInfo.substring(6);
-                showAuctionDetails(Long.parseLong(auctionIdStr), request, out);
-            } else if (pathInfo.equals("/logout")) {
-                handleLogout(request, response);
-                return;
+                showAuctionDetails(request, out, Long.parseLong(auctionIdStr));
+            } else if (pathInfo.equals("/users")) {
+                showUserList(out);
             } else if (pathInfo.equals("/status")) {
                 showSystemStatus(out);
+            } else if (pathInfo.equals("/sessions")) {
+                showSessionStatus(request, out);
+            } else if (pathInfo.equals("/profile")) {
+                showUserProfile(request, out);
+            } else if (pathInfo.equals("/change-password")) {
+                showChangePasswordForm(request, out);
+            } else if (pathInfo.equals("/logout")) {
+                handleUserLogout(request, response);
+                return;
             } else {
                 showError(out, "Page not found", "The requested page does not exist.");
             }
-        } catch (NumberFormatException e) {
-            showError(out, "Invalid auction ID", "Please provide a valid auction ID.");
         } catch (Exception e) {
-            logger.severe("Error in AuctionServlet: " + e.getMessage());
-            showError(out, "System Error", "An unexpected error occurred. Please try again.");
+            logger.severe("Error processing request: " + e.getMessage());
+            showError(out, "Internal server error", "An unexpected error occurred: " + e.getMessage());
         }
     }
 
@@ -75,27 +109,36 @@ public class AuctionServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+
         String pathInfo = request.getPathInfo();
 
         try {
-            if ("/create".equals(pathInfo)) {
+            if (pathInfo != null && pathInfo.equals("/bid")) {
+                handleBidSubmission(request, response);
+            } else if (pathInfo != null && pathInfo.equals("/login")) {
+                handleUserLogin(request, response);
+            } else if (pathInfo != null && pathInfo.equals("/logout")) {
+                handleUserLogout(request, response);
+            } else if (pathInfo != null && pathInfo.equals("/register")) {
+                handleUserRegistration(request, response);
+            } else if (pathInfo != null && pathInfo.equals("/create")) {
                 handleAuctionCreation(request, response);
-            } else if ("/bid".equals(pathInfo)) {
-                handleBidPlacement(request, response);
-            } else if ("/login".equals(pathInfo)) {
-                handleLogin(request, response);
-            } else if ("/register".equals(pathInfo)) {
-                handleRegistration(request, response);
+            } else if (pathInfo != null && pathInfo.equals("/change-password")) {
+                handlePasswordChange(request, response, out);
             } else {
-                response.sendRedirect("/AuctionSystem/auction/?error=invalid_action");
+                showError(out, "Invalid POST request", "The requested action is not valid.");
             }
         } catch (Exception e) {
-            logger.severe("Error in AuctionServlet POST: " + e.getMessage());
+            logger.severe("Error processing POST request: " + e.getMessage());
             response.sendRedirect("/AuctionSystem/auction/?error=system_error");
         }
     }
 
-    // ENHANCED: Main auction page with history section
+    /**
+     * Enhanced main auction page with integrated V1 and V2 features
+     */
     private void showMainAuctionPage(HttpServletRequest request, PrintWriter out) {
         String currentUser = getCurrentUser(request);
         boolean isLoggedIn = currentUser != null;
@@ -110,7 +153,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<head>");
         out.println("<meta charset='UTF-8'>");
         out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        out.println("<title>Online Auction System - Dashboard</title>");
+        out.println("<title>Online Auction System - Enhanced Dashboard</title>");
         out.println("<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>");
 
         // Add enhanced CSS for new components
@@ -124,11 +167,25 @@ public class AuctionServlet extends HttpServlet {
 
         out.println("<div class='container'>");
 
-        // Navigation bar
-        showNavigationBar(out, currentUser, isLoggedIn, isAdmin);
+        // Header with enhanced navigation
+        out.println("<div class='header'>");
+        out.println("<h1>🏺 Online Auction System</h1>");
+        out.println("<p>Enhanced with History & Duration Control - Premium Auction Platform</p>");
+        out.println("</div>");
 
         // Show messages if any
         showMessages(request, out);
+
+        // Show user session info if logged in (V1 feature)
+        if (currentUser != null) {
+            showUserInfoBar(request, out, currentUser);
+        }
+
+        // Enhanced Navigation (V1 + V2 combined)
+        showEnhancedNavigation(out, currentUser, isLoggedIn, isAdmin);
+
+        // System Status Summary (V1 feature)
+        showSystemStatusSummary(out, activeAuctions.size(), completedAuctions.size());
 
         out.println("<div class='main-content'>");
 
@@ -142,7 +199,7 @@ public class AuctionServlet extends HttpServlet {
         } else {
             out.println("<div class='left-panel'>");
             showUserInfo(out, currentUser, isAdmin);
-            showEnhancedAuctionCreationForm(out); // ENHANCED with hours/minutes
+            showEnhancedAuctionCreationForm(out); // V2 enhanced form
             out.println("</div>");
             out.println("<div class='right-panel'>");
             showSystemStatistics(out, activeAuctions.size(), completedAuctions.size());
@@ -151,10 +208,10 @@ public class AuctionServlet extends HttpServlet {
 
         out.println("</div>"); // End main-content
 
-        // ENHANCED: Active auctions section
+        // Enhanced: Active auctions section (V2 with V1 features)
         showActiveAuctionsSection(out, activeAuctions, isLoggedIn);
 
-        // NEW: Completed auctions history section
+        // NEW: Completed auctions history section (V2 feature)
         showCompletedAuctionsSection(out, completedAuctions, isLoggedIn);
 
         out.println("</div>"); // End container
@@ -165,7 +222,77 @@ public class AuctionServlet extends HttpServlet {
         out.println("</body></html>");
     }
 
-    // ENHANCED: Auction creation form with hours and minutes selector
+    /**
+     * Enhanced navigation combining V1 comprehensive features with V2 styling
+     */
+    private void showEnhancedNavigation(PrintWriter out, String currentUser, boolean isLoggedIn, boolean isAdmin) {
+        out.println("<div class='nav-bar'>");
+        out.println("<a href='/AuctionSystem/auction/' class='nav-link'>🏠 Home</a>");
+        out.println("<a href='/AuctionSystem/auction/users' class='nav-link'>👥 Users</a>");
+        out.println("<a href='/AuctionSystem/auction/status' class='nav-link'>📊 System Status</a>");
+        out.println("<a href='/AuctionSystem/auction/sessions' class='nav-link'>🔐 Sessions</a>");
+        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'>🔔 Notifications</a>");
+
+        if (currentUser != null) {
+            out.println("<a href='/AuctionSystem/auction/profile' class='nav-link'>👤 Profile</a>");
+            if (isAdmin) {
+                out.println("<a href='/AuctionSystem/auction/admin/sessions/' class='nav-link admin-link'>🔧 Admin Panel</a>");
+            }
+        }
+        out.println("</div>");
+    }
+
+    /**
+     * V1 System Status Summary with V2 styling
+     */
+    private void showSystemStatusSummary(PrintWriter out, int activeCount, int completedCount) {
+        int activeUsers = userService.getActiveUserCount();
+        int activeSessions = sessionManager.getActiveSessionCount();
+        double totalBidVolume = auctionManager.getTotalBidVolume();
+
+        out.println("<div class='status'>");
+        out.println("<strong>📈 System Status:</strong> ");
+        out.println(activeCount + " active auctions • " + completedCount + " completed • " +
+                activeUsers + " users • " + activeSessions + " sessions • ");
+        out.println("$" + String.format("%.2f", totalBidVolume) + " total volume");
+        out.println("<br><small>Last updated: " + LocalDateTime.now().format(formatter) + " UTC</small>");
+        out.println("</div>");
+    }
+
+    /**
+     * V1 User Info Bar with enhanced styling
+     */
+    private void showUserInfoBar(HttpServletRequest request, PrintWriter out, String username) {
+        HttpSession session = request.getSession(false);
+        String sessionToken = session != null ? (String) session.getAttribute("sessionToken") : null;
+
+        out.println("<div class='user-info'>");
+        out.println("<strong>👤 Welcome, " + escapeHtml(username) + "!</strong> ");
+
+        // Show admin badge if user is admin
+        if (userService.isUserAdmin(username)) {
+            out.println("<span class='admin-badge'>🔑 ADMIN</span> ");
+        }
+
+        if (sessionToken != null) {
+            ActiveSessionInfo sessionInfo = sessionManager.getSessionInfo(sessionToken);
+            if (sessionInfo != null) {
+                out.println("| Session: " + sessionInfo.getSessionDurationMinutes() + " min ");
+                out.println("| Inactive: " + sessionInfo.getInactiveDurationMinutes() + " min ago ");
+            }
+        }
+
+        out.println("| <a href='/AuctionSystem/auction/change-password' style='margin-right: 10px; color: #007bff;'>🔑 Change Password</a>");
+
+        out.println("| <form method='post' action='/AuctionSystem/auction/logout' style='display: inline;'>");
+        out.println("<button type='submit' class='logout-btn'>🚪 Logout</button>");
+        out.println("</form>");
+        out.println("</div>");
+    }
+
+    /**
+     * V2 Enhanced auction creation form with hours/minutes precision
+     */
     private void showEnhancedAuctionCreationForm(PrintWriter out) {
         out.println("<div class='form-container'>");
         out.println("<h3><i class='fas fa-plus-circle'></i> Create New Auction</h3>");
@@ -189,7 +316,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<input type='number' id='startingPrice' name='startingPrice' required min='0.01' step='0.01' placeholder='0.00'>");
         out.println("</div>");
 
-        // ENHANCED: Duration selector with hours and minutes
+        // Enhanced: Duration selector with hours and minutes
         out.println("<div class='form-group'>");
         out.println("<label><i class='fas fa-clock'></i> Auction Duration:</label>");
         out.println("<div class='duration-selector'>");
@@ -238,7 +365,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>");
     }
 
-    // ENHANCED: Active auctions section
+    /**
+     * V2 Enhanced active auctions section
+     */
     private void showActiveAuctionsSection(PrintWriter out, List<AuctionDTO> activeAuctions, boolean isLoggedIn) {
         out.println("<div class='auction-section'>");
         out.println("<div class='section-header'>");
@@ -261,26 +390,33 @@ public class AuctionServlet extends HttpServlet {
             out.println("<tr>");
             out.println("<th><i class='fas fa-hashtag'></i> ID</th>");
             out.println("<th><i class='fas fa-tag'></i> Title</th>");
+            out.println("<th><i class='fas fa-align-left'></i> Description</th>");
             out.println("<th><i class='fas fa-dollar-sign'></i> Current Bid</th>");
             out.println("<th><i class='fas fa-user'></i> Leading Bidder</th>");
             out.println("<th><i class='fas fa-clock'></i> Ends At</th>");
             out.println("<th><i class='fas fa-chart-bar'></i> Bids</th>");
+            out.println("<th><i class='fas fa-flag'></i> Status</th>");
             out.println("<th><i class='fas fa-cogs'></i> Actions</th>");
             out.println("</tr>");
             out.println("</thead>");
             out.println("<tbody>");
 
             for (AuctionDTO auction : activeAuctions) {
-                out.println("<tr class='auction-row'>");
+                boolean isExpired = auction.getEndTime().isBefore(LocalDateTime.now());
+                out.println("<tr class='auction-row'" + (isExpired ? " style='background-color: #fff3cd;'" : "") + ">");
                 out.println("<td><span class='auction-id'>#" + auction.getAuctionId() + "</span></td>");
                 out.println("<td><strong>" + escapeHtml(auction.getTitle()) + "</strong></td>");
+                out.println("<td>" + (auction.getDescription().length() > 50 ?
+                        escapeHtml(auction.getDescription().substring(0, 50)) + "..." :
+                        escapeHtml(auction.getDescription())) + "</td>");
                 out.println("<td class='price'>$" + String.format("%.2f", auction.getCurrentHighestBid()) + "</td>");
                 out.println("<td class='bidder'>" +
                         (auction.getCurrentHighestBidder() != null ?
-                                escapeHtml(auction.getCurrentHighestBidder()) :
+                                "🏆 " + escapeHtml(auction.getCurrentHighestBidder()) :
                                 "<em>No bids yet</em>") + "</td>");
                 out.println("<td class='end-time'>" + auction.getEndTime().format(formatter) + "</td>");
                 out.println("<td class='bid-count'>" + auction.getBidCount() + "</td>");
+                out.println("<td class='status'>" + (auction.isActive() && !isExpired ? "🟢 Active" : "🔴 Ended") + "</td>");
                 out.println("<td class='actions'>");
                 out.println("<a href='/AuctionSystem/auction/view/" + auction.getAuctionId() +
                         "' class='btn btn-small'>");
@@ -298,7 +434,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>"); // End auction-section
     }
 
-    // NEW: Completed auctions history section
+    /**
+     * V2 NEW: Completed auctions history section
+     */
     private void showCompletedAuctionsSection(PrintWriter out, List<AuctionDTO> completedAuctions, boolean isLoggedIn) {
         out.println("<div class='auction-section history-section'>");
         out.println("<div class='section-header'>");
@@ -383,7 +521,89 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>"); // End auction-section
     }
 
-    // ENHANCED: Handle auction creation with hours and minutes
+    /**
+     * Enhanced auction details view combining V1 and V2 features
+     */
+    private void showAuctionDetails(HttpServletRequest request, PrintWriter out, Long auctionId) {
+        String currentUser = getCurrentUser(request);
+        boolean isLoggedIn = currentUser != null;
+
+        AuctionDTO auction = auctionService.getAuction(auctionId);
+        if (auction == null) {
+            showError(out, "Auction Not Found", "The requested auction does not exist.");
+            return;
+        }
+
+        List<Bid> bids = bidService.getBidsForAuction(auctionId);
+
+        out.println("<!DOCTYPE html>");
+        out.println("<html lang='en'>");
+        out.println("<head>");
+        out.println("<meta charset='UTF-8'>");
+        out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        out.println("<title>Auction Details - " + escapeHtml(auction.getTitle()) + "</title>");
+        out.println("<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>");
+
+        // Add enhanced CSS
+        addEnhancedCSS(out);
+
+        out.println("</head>");
+        out.println("<body>");
+
+        // Add copyright comment
+        addCopyrightComment(out);
+
+        out.println("<div class='container'>");
+
+        out.println("<h1>🏺 " + escapeHtml(auction.getTitle()) + "</h1>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+
+        // Show user info if logged in (V1 feature)
+        if (currentUser != null) {
+            showUserInfoBar(request, out, currentUser);
+        }
+
+        // Show messages
+        showMessages(request, out);
+
+        out.println("<div class='auction-details-container'>");
+
+        // Enhanced auction info section (V2 with V1 security)
+        showEnhancedAuctionInfo(out, auction, isLoggedIn);
+
+        // Bidding section (V1 + V2 combined)
+        boolean isExpired = auction.getEndTime().isBefore(LocalDateTime.now());
+        if (auction.isActive() && !isExpired && isLoggedIn) {
+            showBiddingSection(out, auction);
+        } else if (isExpired || !auction.isActive()) {
+            showAuctionCompletionInfo(out, auction);
+        } else if (!isLoggedIn) {
+            out.println("<div class='bid-form'>");
+            out.println("<h3>💰 Login Required to Bid</h3>");
+            out.println("<p>Please <a href='/AuctionSystem/auction/' class='btn'>login</a> to place a bid on this auction.</p>");
+            out.println("</div>");
+        }
+
+        // Bid history section (V1 comprehensive + V2 styling)
+        showBidHistorySection(out, bids, auction.isActive() && !isExpired);
+
+        out.println("</div>"); // End auction-details-container
+        out.println("</div>"); // End container
+
+        // Add footer
+        addFooter(out);
+
+        // Add WebSocket integration for active auctions (V2 feature)
+        if (auction.isActive() && !isExpired) {
+            addWebSocketScript(out, auctionId);
+        }
+
+        out.println("</body></html>");
+    }
+
+    /**
+     * V1 + V2: Enhanced auction creation handler with hours/minutes precision
+     */
     private void handleAuctionCreation(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -400,7 +620,7 @@ public class AuctionServlet extends HttpServlet {
             String durationHoursStr = request.getParameter("durationHours");
             String durationMinutesStr = request.getParameter("durationMinutes");
 
-            // Validate input
+            // V1 validation with V2 duration handling
             if (title == null || title.trim().isEmpty() ||
                     description == null || description.trim().isEmpty() ||
                     startingPriceStr == null || startingPriceStr.trim().isEmpty() ||
@@ -413,19 +633,22 @@ public class AuctionServlet extends HttpServlet {
             int durationHours = Integer.parseInt(durationHoursStr);
             int durationMinutes = Integer.parseInt(durationMinutesStr);
 
-            // Validate starting price
+            // V1 validation logic
             if (startingPrice <= 0) {
                 response.sendRedirect("/AuctionSystem/auction/?error=invalid_price");
                 return;
             }
 
-            // Validate duration using service method
+            // V2 enhanced duration validation
             if (!auctionService.validateAuctionDuration(durationHours, durationMinutes)) {
                 response.sendRedirect("/AuctionSystem/auction/?error=invalid_duration");
                 return;
             }
 
-            // Create auction with enhanced method
+            // V1 session activity update
+            updateSessionActivity(request);
+
+            // V2 enhanced auction creation
             AuctionDTO newAuction = auctionService.createAuction(
                     title.trim(),
                     description.trim(),
@@ -452,11 +675,659 @@ public class AuctionServlet extends HttpServlet {
         }
     }
 
-// [Continue with remaining methods...]
-// Let me continue with the rest of the servlet methods...
-    // [Continuing from previous code...]
+    /**
+     * V1 + V2: Enhanced bid submission handler
+     */
+    private void handleBidSubmission(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
 
-    // Enhanced system statistics with completed auctions
+        String currentUser = getCurrentUser(request);
+        if (currentUser == null) {
+            response.sendRedirect("/AuctionSystem/auction/?error=not_logged_in");
+            return;
+        }
+
+        try {
+            String auctionIdStr = request.getParameter("auctionId");
+            String bidAmountStr = request.getParameter("bidAmount");
+
+            if (auctionIdStr == null || bidAmountStr == null) {
+                response.sendRedirect("/AuctionSystem/auction/?error=missing_fields");
+                return;
+            }
+
+            Long auctionId = Long.parseLong(auctionIdStr);
+            double bidAmount = Double.parseDouble(bidAmountStr);
+
+            // V1 session validation
+            updateSessionActivity(request);
+
+            // V2 auction validation
+            if (!auctionService.isAuctionActive(auctionId)) {
+                response.sendRedirect("/AuctionSystem/auction/view/" + auctionId + "?error=auction_ended");
+                return;
+            }
+
+            // V1 bid placement logic
+            boolean success = bidService.placeBid(auctionId, currentUser, bidAmount);
+
+            if (success) {
+                logger.info("Bid placed successfully: User=" + currentUser +
+                        ", Auction=" + auctionId + ", Amount=$" + bidAmount);
+                response.sendRedirect("/AuctionSystem/auction/view/" + auctionId + "?success=bid_placed");
+            } else {
+                logger.warning("Bid placement failed: User=" + currentUser +
+                        ", Auction=" + auctionId + ", Amount=$" + bidAmount);
+                response.sendRedirect("/AuctionSystem/auction/view/" + auctionId + "?error=invalid_bid");
+            }
+
+        } catch (NumberFormatException e) {
+            logger.warning("Invalid number format in bid placement: " + e.getMessage());
+            response.sendRedirect("/AuctionSystem/auction/?error=invalid_numbers");
+        } catch (Exception e) {
+            logger.severe("Error placing bid: " + e.getMessage());
+            response.sendRedirect("/AuctionSystem/auction/?error=system_error");
+        }
+    }
+
+    /**
+     * V1 Comprehensive user login handler
+     */
+    private void handleUserLogin(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+
+        if (username == null || password == null || username.trim().isEmpty() || password.trim().isEmpty()) {
+            response.sendRedirect("/AuctionSystem/auction/?error=missing_credentials");
+            return;
+        }
+
+        if (userService.authenticateUser(username, password)) {
+            HttpSession session = request.getSession();
+
+            // Get client information for session security
+            String ipAddress = getClientIpAddress(request);
+            String userAgent = request.getHeader("User-Agent");
+
+            // Create secure session token
+            String sessionToken = sessionManager.createUserSession(
+                    username,
+                    session.getId(),
+                    ipAddress,
+                    userAgent != null ? userAgent : "Unknown"
+            );
+
+            // Store session token in HTTP session
+            session.setAttribute("sessionToken", sessionToken);
+            session.setAttribute("username", username);
+
+            logger.info("User logged in successfully: " + username + " from IP: " + ipAddress);
+            response.sendRedirect("/AuctionSystem/auction/?success=login_success");
+        } else {
+            logger.warning("Failed login attempt for user: " + username);
+            response.sendRedirect("/AuctionSystem/auction/?error=login_failed");
+        }
+    }
+
+    /**
+     * V1 Comprehensive user logout handler
+     */
+    private void handleUserLogout(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        HttpSession session = request.getSession(false);
+
+        if (session != null) {
+            String sessionToken = (String) session.getAttribute("sessionToken");
+            String username = (String) session.getAttribute("username");
+
+            // Invalidate session in session manager
+            if (sessionToken != null) {
+                sessionManager.logout(sessionToken);
+            }
+
+            // Invalidate HTTP session
+            session.invalidate();
+
+            logger.info("User logged out: " + username);
+        }
+
+        response.sendRedirect("/AuctionSystem/auction/?message=logged_out");
+    }
+
+    /**
+     * V1 Comprehensive user registration handler
+     */
+    private void handleUserRegistration(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        try {
+            String username = request.getParameter("regUsername");
+            String email = request.getParameter("regEmail");
+            String password = request.getParameter("regPassword");
+            String confirmPassword = request.getParameter("regConfirmPassword");
+
+            // V1 comprehensive validation
+            if (username == null || username.trim().isEmpty() ||
+                    email == null || email.trim().isEmpty() ||
+                    password == null || password.trim().isEmpty() ||
+                    confirmPassword == null || confirmPassword.trim().isEmpty()) {
+                response.sendRedirect("/AuctionSystem/auction/?error=missing_registration_fields");
+                return;
+            }
+
+            if (!password.equals(confirmPassword)) {
+                response.sendRedirect("/AuctionSystem/auction/?error=password_mismatch");
+                return;
+            }
+
+            if (password.length() < 4) {
+                response.sendRedirect("/AuctionSystem/auction/?error=password_too_short");
+                return;
+            }
+
+            if (!isValidEmail(email.trim())) {
+                response.sendRedirect("/AuctionSystem/auction/?error=invalid_email");
+                return;
+            }
+
+            User newUser = userService.registerUser(username.trim(), email.trim(), password);
+
+            if (newUser != null) {
+                logger.info("User registered successfully: " + username.trim());
+                response.sendRedirect("/AuctionSystem/auction/?success=registration_success");
+            } else {
+                logger.warning("Registration failed for user: " + username);
+                response.sendRedirect("/AuctionSystem/auction/?error=user_already_exists");
+            }
+
+        } catch (Exception e) {
+            logger.severe("Error during registration: " + e.getMessage());
+            response.sendRedirect("/AuctionSystem/auction/?error=registration_error");
+        }
+    }
+
+    /**
+     * V1 Password change functionality
+     */
+    private void handlePasswordChange(HttpServletRequest request, HttpServletResponse response, PrintWriter out) throws IOException {
+        String currentUser = getCurrentUser(request);
+        if (currentUser == null) {
+            showError(out, "Authentication Required", "Please login to change your password.");
+            return;
+        }
+
+        String currentPassword = request.getParameter("currentPassword");
+        String newPassword = request.getParameter("newPassword");
+        String confirmPassword = request.getParameter("confirmPassword");
+
+        // Validate inputs
+        if (currentPassword == null || newPassword == null || confirmPassword == null ||
+                currentPassword.trim().isEmpty() || newPassword.trim().isEmpty() || confirmPassword.trim().isEmpty()) {
+            response.sendRedirect("/AuctionSystem/auction/change-password?error=missing_fields");
+            return;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            response.sendRedirect("/AuctionSystem/auction/change-password?error=passwords_dont_match");
+            return;
+        }
+
+        if (newPassword.length() < 4) {
+            response.sendRedirect("/AuctionSystem/auction/change-password?error=password_too_short");
+            return;
+        }
+
+        // Update session activity
+        updateSessionActivity(request);
+
+        boolean success = userService.changePassword(currentUser, currentPassword, newPassword);
+
+        if (success) {
+            response.sendRedirect("/AuctionSystem/auction/?message=password_changed");
+        } else {
+            response.sendRedirect("/AuctionSystem/auction/change-password?error=wrong_password");
+        }
+    }
+
+    // [Additional V1 methods continue here...]
+
+    /**
+     * V1 Show change password form
+     */
+    private void showChangePasswordForm(HttpServletRequest request, PrintWriter out) {
+        String currentUser = getCurrentUser(request);
+        if (currentUser == null) {
+            showError(out, "Authentication Required", "Please login to change your password.");
+            return;
+        }
+
+        out.println("<html><head><title>Change Password</title>");
+        out.println("<meta charset='UTF-8'>");
+        addEnhancedCSS(out);
+        out.println("</head><body>");
+
+        out.println("<div class='container'>");
+        out.println("<h1>🔑 Change Password</h1>");
+        out.println("<a href='/AuctionSystem/auction/'>← Back to Main Page</a><hr>");
+
+        String error = request.getParameter("error");
+        if (error != null) {
+            out.println("<div class='error-msg'>");
+            switch (error) {
+                case "wrong_password":
+                    out.println("❌ Current password is incorrect.");
+                    break;
+                case "password_too_short":
+                    out.println("❌ New password must be at least 4 characters long.");
+                    break;
+                case "passwords_dont_match":
+                    out.println("❌ New passwords do not match.");
+                    break;
+                case "change_failed":
+                    out.println("❌ Password change failed. Please try again.");
+                    break;
+                case "missing_fields":
+                    out.println("❌ All fields are required.");
+                    break;
+            }
+            out.println("</div>");
+        }
+
+        out.println("<form method='post' action='/AuctionSystem/auction/change-password'>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='current_password'>Current Password:</label>");
+        out.println("<input type='password' id='current_password' name='currentPassword' required>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='new_password'>New Password:</label>");
+        out.println("<input type='password' id='new_password' name='newPassword' required minlength='4'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='confirm_password'>Confirm New Password:</label>");
+        out.println("<input type='password' id='confirm_password' name='confirmPassword' required minlength='4'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<input type='submit' value='Change Password' class='btn'>");
+        out.println("</div>");
+        out.println("</form>");
+
+        out.println("</div>");
+        out.println("</body></html>");
+    }
+
+    /**
+     * V1 Show session status
+     */
+    private void showSessionStatus(HttpServletRequest request, PrintWriter out) {
+        out.println("<html><head><title>Session Status</title>");
+        out.println("<meta charset='UTF-8'>");
+        addEnhancedCSS(out);
+        out.println("</head><body>");
+
+        out.println("<div class='container'>");
+        out.println("<h1>🔐 Session Status</h1>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+
+        // Session Statistics
+        int activeSessionCount = sessionManager.getActiveSessionCount();
+        out.println("<div class='status-card'>");
+        out.println("<h3>📊 Session Statistics</h3>");
+        out.println("<p><strong>Total Active Sessions:</strong> " + activeSessionCount + "</p>");
+        out.println("<p><strong>Server Time:</strong> " + LocalDateTime.now().format(formatter) + " UTC</p>");
+        out.println("</div>");
+
+        // Current user session info
+        String currentUser = getCurrentUser(request);
+        if (currentUser != null) {
+            HttpSession session = request.getSession(false);
+            String sessionToken = session != null ? (String) session.getAttribute("sessionToken") : null;
+
+            if (sessionToken != null) {
+                ActiveSessionInfo sessionInfo = sessionManager.getSessionInfo(sessionToken);
+                if (sessionInfo != null) {
+                    out.println("<div class='status-card'>");
+                    out.println("<h3>👤 Your Session Info</h3>");
+                    out.println("<p><strong>Username:</strong> " + sessionInfo.getUsername() + "</p>");
+                    out.println("<p><strong>Login Time:</strong> " + sessionInfo.getLoginTime().format(formatter) + " UTC</p>");
+                    out.println("<p><strong>Session Duration:</strong> " + sessionInfo.getSessionDurationMinutes() + " minutes</p>");
+                    out.println("<p><strong>Last Activity:</strong> " + sessionInfo.getInactiveDurationMinutes() + " minutes ago</p>");
+                    out.println("<p><strong>IP Address:</strong> " + sessionInfo.getIpAddress() + "</p>");
+                    out.println("</div>");
+                }
+            }
+        } else {
+            out.println("<div class='status-card'>");
+            out.println("<h3>👤 Session Info</h3>");
+            out.println("<p>You are not currently logged in.</p>");
+            out.println("</div>");
+        }
+
+        out.println("</div>");
+        out.println("</body></html>");
+    }
+
+    /**
+     * V1 Show user profile
+     */
+    private void showUserProfile(HttpServletRequest request, PrintWriter out) {
+        String currentUser = getCurrentUser(request);
+        if (currentUser == null) {
+            showError(out, "Authentication Required", "Please login to view your profile.");
+            return;
+        }
+
+        out.println("<html><head><title>User Profile</title>");
+        out.println("<meta charset='UTF-8'>");
+        addEnhancedCSS(out);
+        out.println("</head><body>");
+
+        out.println("<div class='container'>");
+        out.println("<h1>👤 User Profile</h1>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+
+        User user = userService.getUserByUsername(currentUser);
+        if (user != null) {
+            out.println("<div class='profile-card'>");
+            out.println("<h3>Profile Information</h3>");
+            out.println("<p><strong>Username:</strong> " + user.getUsername());
+            if (user.isAdmin()) {
+                out.println(" <span class='admin-badge'>🔑 ADMIN</span>");
+            }
+            out.println("</p>");
+            out.println("<p><strong>Email:</strong> " + user.getEmail() + "</p>");
+            out.println("<p><strong>Last Activity:</strong> " + user.getLastActivity().format(formatter) + " UTC</p>");
+            out.println("<p><strong>Account Status:</strong> " + (user.isActive() ? "🟢 Active" : "🔴 Inactive") + "</p>");
+            out.println("<p><a href='/AuctionSystem/auction/change-password' class='btn'>🔑 Change Password</a></p>");
+            out.println("</div>");
+
+            // Show user's active sessions
+            List<ActiveSessionInfo> userSessions = sessionManager.getActiveSessionsForUser(currentUser);
+            out.println("<div class='profile-card'>");
+            out.println("<h3>Your Active Sessions (" + userSessions.size() + ")</h3>");
+
+            if (userSessions.isEmpty()) {
+                out.println("<p>No other active sessions found.</p>");
+            } else {
+                out.println("<table>");
+                out.println("<tr><th>Login Time</th><th>Duration</th><th>IP Address</th><th>Last Activity</th></tr>");
+
+                for (ActiveSessionInfo sessionInfo : userSessions) {
+                    out.println("<tr>");
+                    out.println("<td>" + sessionInfo.getLoginTime().format(formatter) + "</td>");
+                    out.println("<td>" + sessionInfo.getSessionDurationMinutes() + " min</td>");
+                    out.println("<td>" + sessionInfo.getIpAddress() + "</td>");
+                    out.println("<td>" + sessionInfo.getInactiveDurationMinutes() + " min ago</td>");
+                    out.println("</tr>");
+                }
+
+                out.println("</table>");
+            }
+            out.println("</div>");
+        }
+
+        out.println("</div>");
+        out.println("</body></html>");
+    }
+
+    /**
+     * V1 Show user list
+     */
+    private void showUserList(PrintWriter out) {
+        out.println("<html><head><title>Active Users</title>");
+        out.println("<meta charset='UTF-8'>");
+        addEnhancedCSS(out);
+        out.println("</head><body>");
+
+        out.println("<div class='container'>");
+        out.println("<h1>👥 Active Users</h1>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+
+        List<User> users = userService.getAllActiveUsers();
+
+        if (users.isEmpty()) {
+            out.println("<p>No active users found.</p>");
+        } else {
+            out.println("<table>");
+            out.println("<tr><th>Username</th><th>Email</th><th>Role</th><th>Last Activity</th><th>Sessions</th></tr>");
+
+            for (User user : users) {
+                int userSessionCount = sessionManager.getActiveSessionsForUser(user.getUsername()).size();
+                out.println("<tr>");
+                out.println("<td><strong>" + user.getUsername() + "</strong></td>");
+                out.println("<td>" + user.getEmail() + "</td>");
+                out.println("<td>" + (user.isAdmin() ? "<span class='admin-badge'>🔑 ADMIN</span>" : "👤 USER") + "</td>");
+                out.println("<td>" + user.getLastActivity().format(formatter) + "</td>");
+                out.println("<td>" + userSessionCount + " active</td>");
+                out.println("</tr>");
+            }
+
+            out.println("</table>");
+        }
+
+        out.println("</div>");
+        out.println("</body></html>");
+    }
+
+    /**
+     * V1 + V2 Enhanced system status
+     */
+    private void showSystemStatus(PrintWriter out) {
+        out.println("<!DOCTYPE html>");
+        out.println("<html lang='en'>");
+        out.println("<head>");
+        out.println("<meta charset='UTF-8'>");
+        out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        out.println("<title>System Status - Online Auction System</title>");
+        out.println("<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>");
+
+        addEnhancedCSS(out);
+        out.println("</head>");
+        out.println("<body>");
+
+        addCopyrightComment(out);
+
+        out.println("<div class='container'>");
+        out.println("<h1>📊 System Status</h1>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+
+        // System Statistics (V1 comprehensive data)
+        int activeAuctions = auctionService.getActiveAuctionCount();
+        int activeUsers = userService.getActiveUserCount();
+        int activeSessions = sessionManager.getActiveSessionCount();
+        double totalBidVolume = auctionManager.getTotalBidVolume();
+
+        out.println("<div class='status-card'>");
+        out.println("<h3>📈 System Statistics</h3>");
+        out.println("<p><strong>Active Auctions:</strong> " + activeAuctions + "</p>");
+        out.println("<p><strong>Registered Users:</strong> " + activeUsers + "</p>");
+        out.println("<p><strong>Active Sessions:</strong> " + activeSessions + "</p>");
+        out.println("<p><strong>Total Bid Volume:</strong> $" + String.format("%.2f", totalBidVolume) + "</p>");
+        out.println("<p><strong>Server Time:</strong> " + LocalDateTime.now().format(formatter) + " UTC</p>");
+        out.println("</div>");
+
+        out.println("<div class='status-card'>");
+        out.println("<h3>🔧 EJB Components Status</h3>");
+        out.println("<p>✅ AuctionService (Stateless EJB) - Active</p>");
+        out.println("<p>✅ BidService (Stateless EJB) - Active</p>");
+        out.println("<p>✅ UserService (Stateful EJB) - Active</p>");
+        out.println("<p>✅ UserSessionManager (Singleton EJB) - Active</p>");
+        out.println("<p>✅ AuctionManager (Singleton EJB) - Active</p>");
+        out.println("<p>✅ BidNotificationMDB (Message-Driven Bean) - Active</p>");
+        out.println("</div>");
+
+        out.println("<div class='status-card'>");
+        out.println("<h3>📡 Services & Security Status</h3>");
+        out.println("<p>✅ JMS Messaging - Active</p>");
+        out.println("<p>✅ Session Management - Active</p>");
+        out.println("<p>✅ Password Authentication - Active</p>");
+        out.println("<p>✅ Admin Panel Security - Active</p>");
+        out.println("<p>✅ Session Security Validation - Active</p>");
+        out.println("<p>✅ WebSocket Real-time Updates - Active</p>");
+        out.println("</div>");
+
+        out.println("<div class='status-card'>");
+        out.println("<h3>🔐 Security Features</h3>");
+        out.println("<p>✅ SHA-256 Password Hashing</p>");
+        out.println("<p>✅ Session Token Security</p>");
+        out.println("<p>✅ IP Address Validation</p>");
+        out.println("<p>✅ Role-Based Access Control</p>");
+        out.println("<p>✅ Automatic Session Cleanup</p>");
+        out.println("</div>");
+
+        out.println("</div>");
+        addFooter(out);
+        out.println("</body></html>");
+    }
+
+    // [V2 Enhanced UI Components...]
+
+    /**
+     * V2 Enhanced login form
+     */
+    private void showLoginForm(PrintWriter out) {
+        out.println("<div class='form-container'>");
+        out.println("<h3><i class='fas fa-sign-in-alt'></i> User Login</h3>");
+        out.println("<form method='post' action='/AuctionSystem/auction/login'>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='username'>Username or Email:</label>");
+        out.println("<input type='text' id='username' name='username' required placeholder='Enter username or email'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='password'>Password:</label>");
+        out.println("<input type='password' id='password' name='password' required placeholder='Enter password'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<input type='submit' value='Login' class='btn'>");
+        out.println("</div>");
+        out.println("</form>");
+        out.println("<div style='background-color: #e9ecef; padding: 15px; margin-top: 15px; border-radius: 5px;'>");
+        out.println("<p><small><strong>📚 Sample Users:</strong></small></p>");
+        out.println("<p><small>• john_doe, jane_smith, bob_wilson, alice_brown (Password: <code>1234</code>)</small></p>");
+        out.println("<p><small><strong>🔑 Admin Access:</strong> admin@auction.com (Password: <code>11010001</code>)</small></p>");
+        out.println("</div>");
+        out.println("</div>");
+    }
+
+    /**
+     * V2 Enhanced registration form
+     */
+    private void showRegistrationForm(PrintWriter out) {
+        out.println("<div class='form-container'>");
+        out.println("<h3><i class='fas fa-user-plus'></i> Create New Account</h3>");
+        out.println("<form method='post' action='/AuctionSystem/auction/register'>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='reg_username'>Username:</label>");
+        out.println("<input type='text' id='reg_username' name='regUsername' required placeholder='Choose a unique username'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='reg_email'>Email:</label>");
+        out.println("<input type='email' id='reg_email' name='regEmail' required placeholder='Enter your email address'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='reg_password'>Password:</label>");
+        out.println("<input type='password' id='reg_password' name='regPassword' required minlength='4' placeholder='Minimum 4 characters'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<label for='reg_confirm_password'>Confirm Password:</label>");
+        out.println("<input type='password' id='reg_confirm_password' name='regConfirmPassword' required minlength='4' placeholder='Confirm your password'>");
+        out.println("</div>");
+        out.println("<div class='form-group'>");
+        out.println("<input type='submit' value='Register' class='btn btn-success'>");
+        out.println("</div>");
+        out.println("</form>");
+        out.println("</div>");
+    }
+
+    /**
+     * V2 Enhanced user info with statistics
+     */
+    private void showUserInfo(PrintWriter out, String username, boolean isAdmin) {
+        out.println("<div class='user-info-container'>");
+        out.println("<div class='user-welcome'>");
+        out.println("<h3><i class='fas fa-user-circle'></i> Welcome, " + escapeHtml(username) + "!</h3>");
+
+        if (isAdmin) {
+            out.println("<div class='admin-badge'>");
+            out.println("<i class='fas fa-crown'></i> Administrator");
+            out.println("</div>");
+        }
+
+        out.println("</div>");
+
+        // User actions
+        out.println("<div class='user-actions'>");
+        out.println("<div class='action-buttons'>");
+
+        // View won auctions
+        out.println("<a href='/AuctionSystem/auction/?view=my_wins' class='btn btn-small'>");
+        out.println("<i class='fas fa-trophy'></i> My Wins");
+        out.println("</a>");
+
+        // Live notifications
+        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='btn btn-small'>");
+        out.println("<i class='fas fa-bell'></i> Live Updates");
+        out.println("</a>");
+
+        // Admin panel (if admin)
+        if (isAdmin) {
+            out.println("<a href='/AuctionSystem/auction/admin/sessions' class='btn btn-small btn-admin'>");
+            out.println("<i class='fas fa-cogs'></i> Admin Panel");
+            out.println("</a>");
+        }
+
+        // Logout button
+        out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small logout-btn'>");
+        out.println("<i class='fas fa-sign-out-alt'></i> Logout");
+        out.println("</a>");
+
+        out.println("</div>");
+        out.println("</div>");
+
+        // User statistics
+        showUserStatistics(out, username);
+
+        out.println("</div>");
+    }
+
+    /**
+     * V2 Show user statistics
+     */
+    private void showUserStatistics(PrintWriter out, String username) {
+        try {
+            // Get user's won auctions
+            List<AuctionDTO> wonAuctions = auctionService.getUserWonAuctions(username);
+
+            // Calculate total value of won auctions
+            double totalWinnings = wonAuctions.stream()
+                    .mapToDouble(AuctionDTO::getWinningBid)
+                    .sum();
+
+            out.println("<div class='user-stats'>");
+            out.println("<h4><i class='fas fa-chart-bar'></i> Your Statistics</h4>");
+            out.println("<div class='user-stats-grid'>");
+
+            out.println("<div class='user-stat'>");
+            out.println("<div class='stat-value'>" + wonAuctions.size() + "</div>");
+            out.println("<div class='stat-label'>Auctions Won</div>");
+            out.println("</div>");
+
+            out.println("<div class='user-stat'>");
+            out.println("<div class='stat-value'>$" + String.format("%.2f", totalWinnings) + "</div>");
+            out.println("<div class='stat-label'>Total Spent</div>");
+            out.println("</div>");
+
+            out.println("</div>");
+            out.println("</div>");
+
+        } catch (Exception e) {
+            logger.warning("Error getting user statistics for " + username + ": " + e.getMessage());
+        }
+    }
+
+    /**
+     * V2 Enhanced system statistics with completed auctions
+     */
     private void showSystemStatistics(PrintWriter out, int activeCount, int completedCount) {
         out.println("<div class='stats-container'>");
         out.println("<h3><i class='fas fa-chart-line'></i> System Statistics</h3>");
@@ -505,81 +1376,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>"); // End stats-container
     }
 
-    // Enhanced auction details view with history support
-    private void showAuctionDetails(Long auctionId, HttpServletRequest request, PrintWriter out) {
-        String currentUser = getCurrentUser(request);
-        boolean isLoggedIn = currentUser != null;
-
-        AuctionDTO auction = auctionService.getAuction(auctionId);
-        if (auction == null) {
-            showError(out, "Auction Not Found", "The requested auction does not exist.");
-            return;
-        }
-
-        List<Bid> bids = bidService.getBidsForAuction(auctionId);
-
-        out.println("<!DOCTYPE html>");
-        out.println("<html lang='en'>");
-        out.println("<head>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        out.println("<title>Auction Details - " + escapeHtml(auction.getTitle()) + "</title>");
-        out.println("<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>");
-
-        // Add enhanced CSS
-        addEnhancedCSS(out);
-
-        out.println("</head>");
-        out.println("<body>");
-
-        // Add copyright comment
-        addCopyrightComment(out);
-
-        out.println("<div class='container'>");
-
-        // Navigation
-        out.println("<div class='nav-bar'>");
-        out.println("<h1><i class='fas fa-gavel'></i> Auction Details</h1>");
-        out.println("<div class='nav-actions'>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn btn-secondary'>");
-        out.println("<i class='fas fa-arrow-left'></i> Back to Auctions");
-        out.println("</a>");
-        out.println("</div>");
-        out.println("</div>");
-
-        // Show messages
-        showMessages(request, out);
-
-        out.println("<div class='auction-details-container'>");
-
-        // Enhanced auction info section
-        showEnhancedAuctionInfo(out, auction, isLoggedIn);
-
-        // Bidding section (only for active auctions)
-        if (auction.isActive() && isLoggedIn) {
-            showBiddingSection(out, auction);
-        } else if (!auction.isActive()) {
-            showAuctionCompletionInfo(out, auction);
-        }
-
-        // Bid history section
-        showBidHistorySection(out, bids, auction.isActive());
-
-        out.println("</div>"); // End auction-details-container
-        out.println("</div>"); // End container
-
-        // Add footer
-        addFooter(out);
-
-        // Add WebSocket integration for active auctions
-        if (auction.isActive()) {
-            addWebSocketScript(out, auctionId);
-        }
-
-        out.println("</body></html>");
-    }
-
-    // NEW: Enhanced auction info with status indicators
+    /**
+     * V2 NEW: Enhanced auction info with status indicators
+     */
     private void showEnhancedAuctionInfo(PrintWriter out, AuctionDTO auction, boolean isLoggedIn) {
         out.println("<div class='auction-info-section'>");
 
@@ -714,7 +1513,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>"); // End auction-info-section
     }
 
-    // NEW: Auction completion info for ended auctions
+    /**
+     * V2 NEW: Auction completion info for ended auctions
+     */
     private void showAuctionCompletionInfo(PrintWriter out, AuctionDTO auction) {
         out.println("<div class='completion-info-section'>");
         out.println("<div class='completion-card'>");
@@ -750,62 +1551,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>"); // End completion-info-section
     }
 
-    // Enhanced bid history section
-    private void showBidHistorySection(PrintWriter out, List<Bid> bids, boolean isActive) {
-        out.println("<div class='bid-history-section'>");
-        out.println("<h3><i class='fas fa-history'></i> Bid History</h3>");
-
-        if (bids.isEmpty()) {
-            out.println("<div class='empty-state'>");
-            out.println("<i class='fas fa-gavel'></i>");
-            out.println("<p>No bids have been placed yet.</p>");
-            if (isActive) {
-                out.println("<p>Be the first to place a bid!</p>");
-            }
-            out.println("</div>");
-        } else {
-            out.println("<div class='bid-history-table'>");
-            out.println("<table>");
-            out.println("<thead>");
-            out.println("<tr>");
-            out.println("<th>Bid Amount</th>");
-            out.println("<th>Bidder</th>");
-            out.println("<th>Time</th>");
-            out.println("<th>Status</th>");
-            out.println("</tr>");
-            out.println("</thead>");
-            out.println("<tbody>");
-
-            for (Bid bid : bids) {
-                out.println("<tr" + (bid.isWinning() ? " class='winning-bid'" : "") + ">");
-                out.println("<td class='bid-amount'>$" + String.format("%.2f", bid.getBidAmount()) + "</td>");
-                out.println("<td class='bidder'>" + escapeHtml(bid.getBidderUsername()) + "</td>");
-                out.println("<td class='bid-time'>" + bid.getBidTime().format(formatter) + "</td>");
-                out.println("<td class='bid-status'>");
-                if (bid.isWinning() && isActive) {
-                    out.println("<span class='status-badge winning'>");
-                    out.println("<i class='fas fa-crown'></i> Leading");
-                    out.println("</span>");
-                } else if (bid.isWinning() && !isActive) {
-                    out.println("<span class='status-badge winner'>");
-                    out.println("<i class='fas fa-trophy'></i> Winner");
-                    out.println("</span>");
-                } else {
-                    out.println("<span class='status-badge outbid'>Outbid</span>");
-                }
-                out.println("</td>");
-                out.println("</tr>");
-            }
-
-            out.println("</tbody>");
-            out.println("</table>");
-            out.println("</div>");
-        }
-
-        out.println("</div>"); // End bid-history-section
-    }
-
-    // Enhanced bidding section
+    /**
+     * V2 Enhanced bidding section
+     */
     private void showBiddingSection(PrintWriter out, AuctionDTO auction) {
         out.println("<div class='bidding-section'>");
         out.println("<div class='bidding-card'>");
@@ -838,99 +1586,93 @@ public class AuctionServlet extends HttpServlet {
         out.println("</div>"); // End bidding-section
     }
 
-// [Continue with remaining helper methods...]
+    /**
+     * V1 + V2 Enhanced bid history section
+     */
+    private void showBidHistorySection(PrintWriter out, List<Bid> bids, boolean isActive) {
+        out.println("<div class='bid-history-section'>");
+        out.println("<h3><i class='fas fa-history'></i> Bid History</h3>");
 
-    // Enhanced CSS injection
-    private void addEnhancedCSS(PrintWriter out) {
-        out.println("<style>");
-        out.println("/* Enhanced Auction System Styles */");
-        out.println("/* Copyright (c) 2025 Ishara Lakshitha (@isharax9). All rights reserved. */");
+        if (bids.isEmpty()) {
+            out.println("<div class='empty-state'>");
+            out.println("<i class='fas fa-gavel'></i>");
+            out.println("<p>No bids have been placed yet.</p>");
+            if (isActive) {
+                out.println("<p>Be the first to place a bid!</p>");
+            }
+            out.println("</div>");
+        } else {
+            out.println("<div class='bid-history-table'>");
+            out.println("<table>");
+            out.println("<thead>");
+            out.println("<tr>");
+            out.println("<th>Bid #</th>");
+            out.println("<th>Bidder</th>");
+            out.println("<th>Amount</th>");
+            out.println("<th>Time</th>");
+            out.println("<th>Status</th>");
+            out.println("</tr>");
+            out.println("</thead>");
+            out.println("<tbody>");
 
-        // Include the complete CSS from the external file
-        out.println("@import url('/AuctionSystem/css/enhanced-auction-styles.css');");
-
-        // Additional inline styles for specific components
-        out.println("""
-            /* Real-time WebSocket Integration Styles */
-            .live-indicator {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                color: white;
-                padding: 8px 15px;
-                border-radius: 20px;
-                font-size: 0.8rem;
-                font-weight: bold;
-                z-index: 1000;
-                box-shadow: 0 4px 12px rgba(40,167,69,0.3);
-                animation: pulse 2s infinite;
+            for (Bid bid : bids) {
+                out.println("<tr" + (bid.isWinning() ? " class='winning-bid'" : "") + ">");
+                out.println("<td><strong>#" + bid.getBidId() + "</strong></td>");
+                out.println("<td>" + escapeHtml(bid.getBidderUsername()) + "</td>");
+                out.println("<td class='bid-amount'>$" + String.format("%.2f", bid.getBidAmount()) + "</td>");
+                out.println("<td class='bid-time'>" + bid.getBidTime().format(formatter) + "</td>");
+                out.println("<td class='bid-status'>");
+                if (bid.isWinning() && isActive) {
+                    out.println("<span class='status-badge winning'>");
+                    out.println("<i class='fas fa-crown'></i> Leading");
+                    out.println("</span>");
+                } else if (bid.isWinning() && !isActive) {
+                    out.println("<span class='status-badge winner'>");
+                    out.println("<i class='fas fa-trophy'></i> Winner");
+                    out.println("</span>");
+                } else {
+                    out.println("<span class='status-badge outbid'>⚪ Outbid</span>");
+                }
+                out.println("</td>");
+                out.println("</tr>");
             }
 
-            .live-indicator.disconnected {
-                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-                box-shadow: 0 4px 12px rgba(220,53,69,0.3);
-            }
+            out.println("</tbody>");
+            out.println("</table>");
+            out.println("</div>");
+        }
 
-            @keyframes pulse {
-                0% { box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
-                50% { box-shadow: 0 4px 20px rgba(40,167,69,0.6); }
-                100% { box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
-            }
-
-            /* Enhanced Bid Update Animations */
-            .bid-update-animation {
-                animation: bidUpdatePulse 1s ease-out;
-            }
-
-            @keyframes bidUpdatePulse {
-                0% { background: #fff3cd; transform: scale(1); }
-                50% { background: #ffc107; transform: scale(1.02); }
-                100% { background: #fff3cd; transform: scale(1); }
-            }
-
-            /* Loading States */
-            .loading-overlay {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: rgba(255,255,255,0.9);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 9999;
-            }
-
-            .loading-spinner {
-                width: 50px;
-                height: 50px;
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #007bff;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-        """);
-
-        out.println("</style>");
+        out.println("</div>"); // End bid-history-section
     }
 
-    // Enhanced message display
+    /**
+     * V1 + V2 Enhanced message display
+     */
     private void showMessages(HttpServletRequest request, PrintWriter out) {
         String error = request.getParameter("error");
         String success = request.getParameter("success");
+        String message = request.getParameter("message");
         String info = request.getParameter("info");
 
         if (error != null) {
             out.println("<div class='message message-error'>");
             out.println("<i class='fas fa-exclamation-triangle'></i> ");
             switch (error) {
+                case "login_failed":
+                    out.println("❌ Login failed! Invalid username/email or password.");
+                    break;
+                case "session_expired":
+                    out.println("⏰ Your session has expired. Please login again.");
+                    break;
+                case "access_denied":
+                    out.println("🚫 Access denied. Admin privileges required.");
+                    break;
+                case "admin_login_required":
+                    out.println("🔐 Please login with admin credentials to access the admin panel.");
+                    break;
+                case "missing_credentials":
+                    out.println("📝 Please enter both username/email and password.");
+                    break;
                 case "not_logged_in":
                     out.println("Please log in to create auctions or place bids.");
                     break;
@@ -961,14 +1703,20 @@ public class AuctionServlet extends HttpServlet {
                 case "system_error":
                     out.println("A system error occurred. Please try again later.");
                     break;
-                case "session_expired":
-                    out.println("Your session has expired. Please log in again.");
+                case "user_already_exists":
+                    out.println("Username or email already exists. Please choose different credentials.");
                     break;
-                case "access_denied":
-                    out.println("Access denied. You don't have permission to access this resource.");
+                case "password_mismatch":
+                    out.println("Passwords do not match. Please try again.");
+                    break;
+                case "password_too_short":
+                    out.println("Password must be at least 4 characters long.");
+                    break;
+                case "invalid_email":
+                    out.println("Please enter a valid email address.");
                     break;
                 default:
-                    out.println("An error occurred: " + escapeHtml(error));
+                    out.println("❌ " + escapeHtml(error));
             }
             out.println("</div>");
         }
@@ -999,6 +1747,22 @@ public class AuctionServlet extends HttpServlet {
             out.println("</div>");
         }
 
+        if (message != null) {
+            out.println("<div class='message message-success'>");
+            out.println("<i class='fas fa-check-circle'></i> ");
+            switch (message) {
+                case "logged_out":
+                    out.println("✅ You have been logged out successfully.");
+                    break;
+                case "password_changed":
+                    out.println("✅ Password changed successfully!");
+                    break;
+                default:
+                    out.println("✅ " + escapeHtml(message));
+            }
+            out.println("</div>");
+        }
+
         if (info != null) {
             out.println("<div class='message message-info'>");
             out.println("<i class='fas fa-info-circle'></i> ");
@@ -1007,57 +1771,587 @@ public class AuctionServlet extends HttpServlet {
         }
     }
 
-    // Enhanced bid placement handler
-    private void handleBidPlacement(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    /**
+     * V2 Enhanced CSS injection
+     */
+    private void addEnhancedCSS(PrintWriter out) {
+        out.println("<style>");
+        out.println("/* Enhanced Auction System Styles */");
+        out.println("/* Copyright (c) 2025 Ishara Lakshitha (@isharax9). All rights reserved. */");
 
-        String currentUser = getCurrentUser(request);
-        if (currentUser == null) {
-            response.sendRedirect("/AuctionSystem/auction/?error=not_logged_in");
-            return;
-        }
+        // Include the complete CSS from the external file
+        out.println("@import url('/AuctionSystem/css/enhanced-auction-styles.css');");
 
-        try {
-            String auctionIdStr = request.getParameter("auctionId");
-            String bidAmountStr = request.getParameter("bidAmount");
-
-            if (auctionIdStr == null || bidAmountStr == null) {
-                response.sendRedirect("/AuctionSystem/auction/?error=missing_fields");
-                return;
+        out.println("""
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
             }
 
-            Long auctionId = Long.parseLong(auctionIdStr);
-            double bidAmount = Double.parseDouble(bidAmountStr);
-
-            // Validate auction exists and is active
-            if (!auctionService.isAuctionActive(auctionId)) {
-                response.sendRedirect("/AuctionSystem/auction/view/" + auctionId + "?error=auction_ended");
-                return;
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                color: #333;
+                line-height: 1.6;
             }
 
-            // Place bid
-            boolean success = bidService.placeBid(auctionId, currentUser, bidAmount);
-
-            if (success) {
-                logger.info("Bid placed successfully: User=" + currentUser +
-                        ", Auction=" + auctionId + ", Amount=$" + bidAmount);
-                response.sendRedirect("/AuctionSystem/auction/view/" + auctionId + "?success=bid_placed");
-            } else {
-                logger.warning("Bid placement failed: User=" + currentUser +
-                        ", Auction=" + auctionId + ", Amount=$" + bidAmount);
-                response.sendRedirect("/AuctionSystem/auction/view/" + auctionId + "?error=invalid_bid");
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(10px);
+                margin-top: 20px;
+                margin-bottom: 20px;
             }
 
-        } catch (NumberFormatException e) {
-            logger.warning("Invalid number format in bid placement: " + e.getMessage());
-            response.sendRedirect("/AuctionSystem/auction/?error=invalid_numbers");
-        } catch (Exception e) {
-            logger.severe("Error placing bid: " + e.getMessage());
-            response.sendRedirect("/AuctionSystem/auction/?error=system_error");
-        }
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+                padding: 20px 0;
+                border-bottom: 2px solid #eee;
+            }
+
+            .header h1 {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+            }
+
+            .nav-bar {
+                background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+                padding: 15px 20px;
+                margin: -30px -30px 30px -30px;
+                border-radius: 15px 15px 0 0;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 15px;
+                align-items: center;
+            }
+
+            .nav-link {
+                color: white;
+                text-decoration: none;
+                padding: 8px 15px;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+                font-weight: 500;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .nav-link:hover {
+                background: rgba(255, 255, 255, 0.2);
+                transform: translateY(-2px);
+            }
+
+            .nav-link.admin-link {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                font-weight: bold;
+            }
+
+            .main-content {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                margin-bottom: 40px;
+            }
+
+            .left-panel, .right-panel {
+                background: #f8f9fa;
+                padding: 25px;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            }
+
+            .form-container {
+                background: white;
+                padding: 25px;
+                border-radius: 12px;
+                margin-bottom: 25px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+                border-left: 4px solid #667eea;
+            }
+
+            .form-container h3 {
+                color: #2c3e50;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 1.2rem;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            .form-group label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 8px;
+                color: #2c3e50;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                width: 100%;
+                padding: 12px 15px;
+                border: 2px solid #e1e8ed;
+                border-radius: 8px;
+                font-size: 14px;
+                transition: all 0.3s ease;
+                background: white;
+            }
+
+            .form-group input:focus,
+            .form-group textarea:focus,
+            .form-group select:focus {
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                outline: none;
+            }
+
+            .duration-selector {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-top: 10px;
+            }
+
+            .time-input-group {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .time-input-group label {
+                font-size: 0.9rem;
+                font-weight: 500;
+                color: #666;
+            }
+
+            .duration-help {
+                margin-top: 10px;
+                padding: 10px;
+                background: #e3f2fd;
+                border-radius: 6px;
+                border-left: 3px solid #2196f3;
+            }
+
+            .btn {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 12px 24px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            .btn-success {
+                background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+                box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            }
+
+            .btn-success:hover {
+                box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+            }
+
+            .btn-secondary {
+                background: linear-gradient(135deg, #95a5a6 0%, #bdc3c7 100%);
+                box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+            }
+
+            .btn-small {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+
+            .logout-btn {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            }
+
+            .auction-section {
+                margin: 40px 0;
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            }
+
+            .section-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 25px;
+                padding-bottom: 15px;
+                border-bottom: 2px solid #eee;
+            }
+
+            .section-header h2 {
+                color: #2c3e50;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                font-size: 1.5rem;
+            }
+
+            .badge {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 6px 15px;
+                border-radius: 20px;
+                font-size: 0.9rem;
+                font-weight: 600;
+            }
+
+            .badge-secondary {
+                background: linear-gradient(135deg, #95a5a6 0%, #bdc3c7 100%);
+            }
+
+            .table-container {
+                overflow-x: auto;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            }
+
+            .auction-table {
+                width: 100%;
+                border-collapse: collapse;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+
+            .auction-table thead {
+                background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+                color: white;
+            }
+
+            .auction-table th,
+            .auction-table td {
+                padding: 15px 12px;
+                text-align: left;
+                border-bottom: 1px solid #eee;
+            }
+
+            .auction-table th {
+                font-weight: 600;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .auction-row:hover {
+                background: #f8f9fa;
+                transform: scale(1.01);
+                transition: all 0.3s ease;
+            }
+
+            .auction-id {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 4px 10px;
+                border-radius: 15px;
+                font-size: 0.8rem;
+                font-weight: bold;
+            }
+
+            .price {
+                font-weight: bold;
+                color: #27ae60;
+                font-size: 1.1rem;
+            }
+
+            .winner-price {
+                color: #f39c12;
+                background: #fff3cd;
+                padding: 5px 10px;
+                border-radius: 6px;
+            }
+
+            .winner-badge {
+                background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+                color: white;
+                padding: 4px 12px;
+                border-radius: 15px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 60px 20px;
+                color: #7f8c8d;
+            }
+
+            .empty-state i {
+                font-size: 4rem;
+                margin-bottom: 20px;
+                opacity: 0.5;
+            }
+
+            .message {
+                padding: 15px 20px;
+                margin: 20px 0;
+                border-radius: 8px;
+                border-left: 4px solid;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-weight: 500;
+            }
+
+            .message-error {
+                background: #fff5f5;
+                color: #c53030;
+                border-left-color: #e53e3e;
+            }
+
+            .message-success {
+                background: #f0fff4;
+                color: #38a169;
+                border-left-color: #48bb78;
+            }
+
+            .message-info {
+                background: #ebf8ff;
+                color: #3182ce;
+                border-left-color: #4299e1;
+            }
+
+            .user-info {
+                background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 12px;
+                border-left: 4px solid #28a745;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                flex-wrap: wrap;
+            }
+
+            .admin-badge {
+                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                color: white;
+                padding: 4px 12px;
+                border-radius: 15px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .status {
+                background: linear-gradient(135deg, #e7f3ff 0%, #cce7ff 100%);
+                padding: 20px;
+                margin: 20px 0;
+                border-radius: 12px;
+                border-left: 4px solid #007bff;
+                font-weight: 500;
+            }
+
+            .stats-container {
+                background: white;
+                padding: 25px;
+                border-radius: 12px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+                margin-bottom: 25px;
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }
+
+            .stat-card {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                padding: 20px;
+                border-radius: 12px;
+                text-align: center;
+                border: 2px solid transparent;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            }
+
+            .stat-icon {
+                font-size: 2rem;
+                color: #667eea;
+            }
+
+            .stat-info {
+                flex: 1;
+                text-align: left;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+                font-weight: bold;
+                color: #2c3e50;
+                margin-bottom: 5px;
+            }
+
+            .stat-label {
+                color: #7f8c8d;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .footer {
+                background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+                color: white;
+                text-align: center;
+                padding: 40px 20px;
+                margin: 40px -30px -30px -30px;
+                border-radius: 0 0 15px 15px;
+            }
+
+            .footer-content {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+
+            .footer-links {
+                margin: 20px 0;
+            }
+
+            .footer-links a {
+                color: #bdc3c7;
+                text-decoration: none;
+                margin: 0 15px;
+                transition: color 0.3s ease;
+            }
+
+            .footer-links a:hover {
+                color: white;
+            }
+
+            /* Real-time WebSocket Integration Styles */
+            .live-indicator {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                color: white;
+                padding: 8px 15px;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: bold;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+                animation: pulse 2s infinite;
+            }
+
+            .live-indicator.disconnected {
+                background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+                box-shadow: 0 4px 12px rgba(220,53,69,0.3);
+            }
+
+            @keyframes pulse {
+                0% { box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+                50% { box-shadow: 0 4px 20px rgba(40,167,69,0.6); }
+                100% { box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+            }
+
+            .bid-update-animation {
+                animation: bidUpdatePulse 1s ease-out;
+            }
+
+            @keyframes bidUpdatePulse {
+                0% { background: #fff3cd; transform: scale(1); }
+                50% { background: #ffc107; transform: scale(1.02); }
+                100% { background: #fff3cd; transform: scale(1); }
+            }
+
+            /* Responsive Design */
+            @media (max-width: 768px) {
+                .container {
+                    margin: 10px;
+                    padding: 20px;
+                }
+
+                .main-content {
+                    grid-template-columns: 1fr;
+                    gap: 20px;
+                }
+
+                .nav-bar {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+
+                .duration-selector {
+                    grid-template-columns: 1fr;
+                }
+
+                .stats-grid {
+                    grid-template-columns: 1fr;
+                }
+
+                .section-header {
+                    flex-direction: column;
+                    align-items: stretch;
+                    gap: 15px;
+                }
+
+                .auction-table {
+                    font-size: 0.85rem;
+                }
+
+                .auction-table th,
+                .auction-table td {
+                    padding: 8px 6px;
+                }
+            }
+        """);
+
+        out.println("</style>");
     }
 
-    // Add WebSocket integration script
+    /**
+     * V2 Add WebSocket integration script
+     */
     private void addWebSocketScript(PrintWriter out, Long auctionId) {
         out.println("<script>");
         out.println("// Enhanced WebSocket Integration for Real-time Updates");
@@ -1119,11 +2413,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("        const bidUpdate = data.data;");
         out.println("        updateBidDisplay(bidUpdate);");
         out.println("        showBidNotification(bidUpdate);");
-        out.println("        refreshBidHistory();");
-        out.println("    } else if (data.type === 'connection') {");
-        out.println("        console.log('Connection confirmed:', data.message);");
-        out.println("    } else if (data.type === 'heartbeat') {");
-        out.println("        console.log('Heartbeat received');");
+        out.println("        setTimeout(() => window.location.reload(), 2000);");
         out.println("    }");
         out.println("}");
         out.println("");
@@ -1140,25 +2430,20 @@ public class AuctionServlet extends HttpServlet {
         out.println("    ");
         out.println("    if (bidAmountElement) {");
         out.println("        bidAmountElement.textContent = '$' + bidUpdate.bidAmount.toFixed(2);");
-        out.println("        bidAmountElement.classList.add('bid-update-animation');");
-        out.println("        setTimeout(() => bidAmountElement.classList.remove('bid-update-animation'), 1000);");
         out.println("    }");
         out.println("    ");
         out.println("    if (bidderElement) {");
         out.println("        bidderElement.textContent = bidUpdate.bidderUsername;");
         out.println("    }");
         out.println("    ");
-        out.println("    // Update minimum bid in form");
         out.println("    const bidInput = document.getElementById('bidAmount');");
         out.println("    if (bidInput) {");
         out.println("        const newMin = bidUpdate.bidAmount + 5.01;");
         out.println("        bidInput.min = newMin.toFixed(2);");
-        out.println("        bidInput.placeholder = 'Min: $' + newMin.toFixed(2);");
         out.println("    }");
         out.println("}");
         out.println("");
         out.println("function showBidNotification(bidUpdate) {");
-        out.println("    // Create notification element");
         out.println("    const notification = document.createElement('div');");
         out.println("    notification.className = 'live-indicator';");
         out.println("    notification.innerHTML = `");
@@ -1168,7 +2453,6 @@ public class AuctionServlet extends HttpServlet {
         out.println("    ");
         out.println("    document.body.appendChild(notification);");
         out.println("    ");
-        out.println("    // Remove after 5 seconds");
         out.println("    setTimeout(() => {");
         out.println("        if (notification.parentNode) {");
         out.println("            notification.parentNode.removeChild(notification);");
@@ -1195,18 +2479,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("    }");
         out.println("}");
         out.println("");
-        out.println("function refreshBidHistory() {");
-        out.println("    // Refresh the current page to show updated bid history");
-        out.println("    setTimeout(() => {");
-        out.println("        window.location.reload();");
-        out.println("    }, 2000);");
-        out.println("}");
-        out.println("");
-        out.println("// Initialize WebSocket connection");
         out.println("document.addEventListener('DOMContentLoaded', function() {");
         out.println("    connectWebSocket();");
         out.println("    ");
-        out.println("    // Send heartbeat every 30 seconds");
         out.println("    setInterval(() => {");
         out.println("        if (ws && ws.readyState === WebSocket.OPEN) {");
         out.println("            ws.send(JSON.stringify({type: 'heartbeat', timestamp: Date.now()}));");
@@ -1214,7 +2489,6 @@ public class AuctionServlet extends HttpServlet {
         out.println("    }, 30000);");
         out.println("});");
         out.println("");
-        out.println("// Cleanup on page unload");
         out.println("window.addEventListener('beforeunload', function() {");
         out.println("    if (ws) {");
         out.println("        ws.close();");
@@ -1223,707 +2497,48 @@ public class AuctionServlet extends HttpServlet {
         out.println("</script>");
     }
 
-    // Add copyright comment
+    /**
+     * V2 Add copyright comment
+     */
     private void addCopyrightComment(PrintWriter out) {
         out.println("<!--");
-        out.println("    Enhanced Online Auction System");
+        out.println("    Enhanced Online Auction System - Merged V1 + V2");
         out.println("    Copyright (c) 2025 Ishara Lakshitha (@isharax9). All rights reserved.");
         out.println("    ");
-        out.println("    This software and associated documentation files (the \"Software\") are proprietary");
-        out.println("    and confidential to Ishara Lakshitha. Unauthorized copying, distribution, or use");
-        out.println("    of this Software, via any medium, is strictly prohibited without prior written");
-        out.println("    permission from the copyright holder.");
+        out.println("    This comprehensive auction system combines:");
+        out.println("    - V1: Complete session management, admin features, user management");
+        out.println("    - V2: Enhanced UI, auction history, duration control, WebSocket integration");
         out.println("    ");
         out.println("    Author: Ishara Lakshitha (@isharax9)");
-        out.println("    Project: AuctionSystem - Welcome to the premier online auction platform");
+        out.println("    Project: AuctionSystem - Complete Feature Integration");
         out.println("    Created: June 2025");
-        out.println("    Features: EJB, JMS, WebSocket, Real-time Bidding, Auction History");
+        out.println("    Features: EJB, JMS, WebSocket, Real-time Bidding, Complete User Management");
         out.println("-->");
     }
 
-    // Add footer
+    /**
+     * V2 Add footer
+     */
     private void addFooter(PrintWriter out) {
-        out.println("</div>"); // Close container
-        out.println("<footer style=\"text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #ddd; background-color: #f8f9fa;\">");
-        out.println("<div style=\"color: #666; font-size: 14px;\">");
-        out.println("<p>&copy; 2025 <strong>Ishara Lakshitha</strong>. All rights reserved.</p>");
-        out.println("<p style=\"margin: 5px 0;\">");
-        out.println("<i class=\"fas fa-code\"></i>");
-        out.println("Developed by <a href=\"https://github.com/isharax9\" target=\"_blank\" style=\"color: #007bff; text-decoration: none;\">@isharax9</a>");
-        out.println("</p>");
-        out.println("<p style=\"margin: 0; font-size: 12px; color: #888;\">");
-        out.println("Auction System Dashboard | BCD 1 Research Assignment");
-        out.println("</p>");
+        out.println("<div class='footer'>");
+        out.println("<div class='footer-content'>");
+        out.println("<p><strong>Enhanced Online Auction System - Complete Integration</strong></p>");
+        out.println("<p>Enterprise JavaBeans + Java Message Service + WebSocket Integration + Complete User Management</p>");
+        out.println("<div class='footer-links'>");
+        out.println("<a href='/AuctionSystem/auction/'>Dashboard</a>");
+        out.println("<a href='/AuctionSystem/auction/status'>System Status</a>");
+        out.println("<a href='/AuctionSystem/auction/sessions'>Session Status</a>");
+        out.println("<a href='/AuctionSystem/real-time-notifications.html'>Live Notifications</a>");
         out.println("</div>");
-        out.println("</footer>");
-    }
-
-    // [Include remaining existing methods: getCurrentUser, handleLogin, etc...]
-
-    private String getCurrentUser(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            String sessionToken = (String) session.getAttribute("sessionToken");
-            if (sessionToken != null && sessionManager.isSessionValid(sessionToken)) {
-                return (String) session.getAttribute("username");
-            }
-        }
-        return null;
-    }
-
-    private String escapeHtml(String input) {
-        if (input == null) return "";
-        return input.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#x27;");
-    }
-
-    // [Continue with other existing methods like handleLogin, handleRegistration, etc.]
-    // [Continuing with all remaining methods...]
-
-    // Handle user login
-    private void handleLogin(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        try {
-            String username = request.getParameter("username");
-            String password = request.getParameter("password");
-
-            if (username == null || username.trim().isEmpty() ||
-                    password == null || password.trim().isEmpty()) {
-                response.sendRedirect("/AuctionSystem/auction/?error=missing_credentials");
-                return;
-            }
-
-            // Authenticate user
-            if (userService.authenticateUser(username.trim(), password)) {
-                // Create session
-                HttpSession httpSession = request.getSession(true);
-                String sessionId = httpSession.getId();
-                String ipAddress = getClientIpAddress(request);
-                String userAgent = request.getHeader("User-Agent");
-
-                String sessionToken = sessionManager.createUserSession(username.trim(), sessionId, ipAddress, userAgent);
-
-                // Store session information
-                httpSession.setAttribute("sessionToken", sessionToken);
-                httpSession.setAttribute("username", username.trim());
-                httpSession.setMaxInactiveInterval(30 * 60); // 30 minutes
-
-                logger.info("User logged in successfully: " + username.trim());
-                response.sendRedirect("/AuctionSystem/auction/?success=login_success");
-            } else {
-                logger.warning("Login failed for user: " + username);
-                response.sendRedirect("/AuctionSystem/auction/?error=invalid_credentials");
-            }
-
-        } catch (Exception e) {
-            logger.severe("Error during login: " + e.getMessage());
-            response.sendRedirect("/AuctionSystem/auction/?error=login_error");
-        }
-    }
-
-    // Handle user registration
-    private void handleRegistration(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        try {
-            String username = request.getParameter("regUsername");
-            String email = request.getParameter("regEmail");
-            String password = request.getParameter("regPassword");
-            String confirmPassword = request.getParameter("regConfirmPassword");
-
-            // Validate input
-            if (username == null || username.trim().isEmpty() ||
-                    email == null || email.trim().isEmpty() ||
-                    password == null || password.trim().isEmpty() ||
-                    confirmPassword == null || confirmPassword.trim().isEmpty()) {
-                response.sendRedirect("/AuctionSystem/auction/?error=missing_registration_fields");
-                return;
-            }
-
-            // Validate password match
-            if (!password.equals(confirmPassword)) {
-                response.sendRedirect("/AuctionSystem/auction/?error=password_mismatch");
-                return;
-            }
-
-            // Validate password length
-            if (password.length() < 4) {
-                response.sendRedirect("/AuctionSystem/auction/?error=password_too_short");
-                return;
-            }
-
-            // Validate email format
-            if (!isValidEmail(email.trim())) {
-                response.sendRedirect("/AuctionSystem/auction/?error=invalid_email");
-                return;
-            }
-
-            // Register user
-            var newUser = userService.registerUser(username.trim(), email.trim(), password);
-
-            if (newUser != null) {
-                logger.info("User registered successfully: " + username.trim());
-                response.sendRedirect("/AuctionSystem/auction/?success=registration_success");
-            } else {
-                logger.warning("Registration failed for user: " + username);
-                response.sendRedirect("/AuctionSystem/auction/?error=user_already_exists");
-            }
-
-        } catch (Exception e) {
-            logger.severe("Error during registration: " + e.getMessage());
-            response.sendRedirect("/AuctionSystem/auction/?error=registration_error");
-        }
-    }
-
-    // Handle logout
-    private void handleLogout(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
-        HttpSession httpSession = request.getSession(false);
-        String username = null;
-
-        if (httpSession != null) {
-            String sessionToken = (String) httpSession.getAttribute("sessionToken");
-            username = (String) httpSession.getAttribute("username");
-
-            if (sessionToken != null) {
-                sessionManager.logout(sessionToken);
-            }
-
-            httpSession.invalidate();
-        }
-
-        logger.info("User logged out: " + (username != null ? username : "unknown"));
-        response.sendRedirect("/AuctionSystem/auction/?info=logged_out");
-    }
-
-    // Show login form
-    private void showLoginForm(PrintWriter out) {
-        out.println("<div class='form-container'>");
-        out.println("<h3><i class='fas fa-sign-in-alt'></i> Login</h3>");
-        out.println("<form method='post' action='/AuctionSystem/auction/login' class='login-form'>");
-
-        out.println("<div class='form-group'>");
-        out.println("<label for='username'><i class='fas fa-user'></i> Username:</label>");
-        out.println("<input type='text' id='username' name='username' required maxlength='50' ");
-        out.println("placeholder='Enter your username' autocomplete='username'>");
+        out.println("<p>&copy; 2025 <strong>Ishara Lakshitha (@isharax9)</strong>. All rights reserved.</p>");
+        out.println("<p><em>Business Component Development - Final Year Project - Complete V1+V2 Integration</em></p>");
         out.println("</div>");
-
-        out.println("<div class='form-group'>");
-        out.println("<label for='password'><i class='fas fa-lock'></i> Password:</label>");
-        out.println("<input type='password' id='password' name='password' required ");
-        out.println("placeholder='Enter your password' autocomplete='current-password'>");
-        out.println("</div>");
-
-        out.println("<div class='form-group'>");
-        out.println("<button type='submit' class='btn btn-success btn-login'>");
-        out.println("<i class='fas fa-sign-in-alt'></i> Login");
-        out.println("</button>");
-        out.println("</div>");
-
-        out.println("</form>");
-
-        // Add demo credentials info
-        out.println("<div class='demo-info'>");
-        out.println("<h4><i class='fas fa-info-circle'></i> Demo Credentials</h4>");
-        out.println("<div class='demo-accounts'>");
-        out.println("<div class='demo-account'>");
-        out.println("<strong>Regular User:</strong><br>");
-        out.println("Username: <code>john_doe</code><br>");
-        out.println("Password: <code>1234</code>");
-        out.println("</div>");
-        out.println("<div class='demo-account'>");
-        out.println("<strong>Admin User:</strong><br>");
-        out.println("Username: <code>admin@auction.com</code><br>");
-        out.println("Password: <code>11010001</code>");
-        out.println("</div>");
-        out.println("</div>");
-        out.println("</div>");
-
         out.println("</div>");
     }
 
-    // Show registration form
-    private void showRegistrationForm(PrintWriter out) {
-        out.println("<div class='form-container'>");
-        out.println("<h3><i class='fas fa-user-plus'></i> Register New Account</h3>");
-        out.println("<form method='post' action='/AuctionSystem/auction/register' class='registration-form'>");
-
-        out.println("<div class='form-group'>");
-        out.println("<label for='regUsername'><i class='fas fa-user'></i> Username:</label>");
-        out.println("<input type='text' id='regUsername' name='regUsername' required maxlength='50' ");
-        out.println("placeholder='Choose a username' autocomplete='username'>");
-        out.println("<small>3-50 characters, letters and numbers only</small>");
-        out.println("</div>");
-
-        out.println("<div class='form-group'>");
-        out.println("<label for='regEmail'><i class='fas fa-envelope'></i> Email:</label>");
-        out.println("<input type='email' id='regEmail' name='regEmail' required maxlength='100' ");
-        out.println("placeholder='your.email@example.com' autocomplete='email'>");
-        out.println("</div>");
-
-        out.println("<div class='form-group'>");
-        out.println("<label for='regPassword'><i class='fas fa-lock'></i> Password:</label>");
-        out.println("<input type='password' id='regPassword' name='regPassword' required ");
-        out.println("placeholder='Enter password' autocomplete='new-password' minlength='4'>");
-        out.println("<small>Minimum 4 characters</small>");
-        out.println("</div>");
-
-        out.println("<div class='form-group'>");
-        out.println("<label for='regConfirmPassword'><i class='fas fa-lock'></i> Confirm Password:</label>");
-        out.println("<input type='password' id='regConfirmPassword' name='regConfirmPassword' required ");
-        out.println("placeholder='Confirm password' autocomplete='new-password'>");
-        out.println("</div>");
-
-        out.println("<div class='form-group'>");
-        out.println("<button type='submit' class='btn btn-success btn-register'>");
-        out.println("<i class='fas fa-user-plus'></i> Create Account");
-        out.println("</button>");
-        out.println("</div>");
-
-        out.println("</form>");
-        out.println("</div>");
-    }
-
-    // Show user information panel
-    private void showUserInfo(PrintWriter out, String username, boolean isAdmin) {
-        out.println("<div class='user-info-container'>");
-        out.println("<div class='user-welcome'>");
-        out.println("<h3><i class='fas fa-user-circle'></i> Welcome, " + escapeHtml(username) + "!</h3>");
-
-        if (isAdmin) {
-            out.println("<div class='admin-badge'>");
-            out.println("<i class='fas fa-crown'></i> Administrator");
-            out.println("</div>");
-        }
-
-        out.println("</div>");
-
-        // User actions
-        out.println("<div class='user-actions'>");
-        out.println("<div class='action-buttons'>");
-
-        // View won auctions
-        out.println("<a href='/AuctionSystem/auction/?view=my_wins' class='btn btn-small'>");
-        out.println("<i class='fas fa-trophy'></i> My Wins");
-        out.println("</a>");
-
-        // Live notifications
-        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='btn btn-small'>");
-        out.println("<i class='fas fa-bell'></i> Live Updates");
-        out.println("</a>");
-
-        // Admin panel (if admin)
-        if (isAdmin) {
-            out.println("<a href='/AuctionSystem/auction/admin/sessions' class='btn btn-small btn-admin'>");
-            out.println("<i class='fas fa-cogs'></i> Admin Panel");
-            out.println("</a>");
-        }
-
-        // Logout button
-        out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small logout-btn'>");
-        out.println("<i class='fas fa-sign-out-alt'></i> Logout");
-        out.println("</a>");
-
-        out.println("</div>");
-        out.println("</div>");
-
-        // User statistics
-        showUserStatistics(out, username);
-
-        out.println("</div>");
-    }
-
-    // Show user statistics
-    private void showUserStatistics(PrintWriter out, String username) {
-        try {
-            // Get user's won auctions
-            List<AuctionDTO> wonAuctions = auctionService.getUserWonAuctions(username);
-
-            // Calculate total value of won auctions
-            double totalWinnings = wonAuctions.stream()
-                    .mapToDouble(AuctionDTO::getWinningBid)
-                    .sum();
-
-            out.println("<div class='user-stats'>");
-            out.println("<h4><i class='fas fa-chart-bar'></i> Your Statistics</h4>");
-            out.println("<div class='user-stats-grid'>");
-
-            out.println("<div class='user-stat'>");
-            out.println("<div class='stat-value'>" + wonAuctions.size() + "</div>");
-            out.println("<div class='stat-label'>Auctions Won</div>");
-            out.println("</div>");
-
-            out.println("<div class='user-stat'>");
-            out.println("<div class='stat-value'>$" + String.format("%.2f", totalWinnings) + "</div>");
-            out.println("<div class='stat-label'>Total Spent</div>");
-            out.println("</div>");
-
-            out.println("</div>");
-            out.println("</div>");
-
-        } catch (Exception e) {
-            logger.warning("Error getting user statistics for " + username + ": " + e.getMessage());
-        }
-    }
-
-    // Enhanced Professional System Status Page
-    private void showSystemStatus(PrintWriter out) {
-        out.println("<!DOCTYPE html>");
-        out.println("<html lang='en'>");
-        out.println("<head>");
-        out.println("<meta charset='UTF-8'>");
-        out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        out.println("<title>System Status - Online Auction System</title>");
-
-        addSimpleCSS(out);
-
-        out.println("</head>");
-        out.println("<body>");
-
-        // Simple Header
-        out.println("<div class='header'>");
-        out.println("<div class='container'>");
-        out.println("<h1>System Status</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='back-link'>← Back to Auctions</a>");
-        out.println("</div>");
-        out.println("</div>");
-
-        out.println("<div class='container'>");
-
-        // Get system data
-        List<AuctionDTO> activeAuctions = auctionService.getAllActiveAuctions();
-        List<AuctionDTO> completedAuctions = auctionService.getAllCompletedAuctions();
-        int activeUserCount = userService.getActiveUserCount();
-        int activeSessions = sessionManager.getActiveSessionCount();
-
-        // System Overview Table
-        out.println("<div class='section'>");
-        out.println("<h2>System Overview</h2>");
-        out.println("<table class='status-table'>");
-        out.println("<tr>");
-        out.println("<th>Metric</th>");
-        out.println("<th>Value</th>");
-        out.println("<th>Status</th>");
-        out.println("</tr>");
-
-        out.println("<tr>");
-        out.println("<td>Current Time (UTC)</td>");
-        out.println("<td>" + LocalDateTime.now().format(formatter) + "</td>");
-        out.println("<td><span class='status-ok'>ACTIVE</span></td>");
-        out.println("</tr>");
-
-        out.println("<tr>");
-        out.println("<td>Active Auctions</td>");
-        out.println("<td>" + activeAuctions.size() + "</td>");
-        out.println("<td><span class='status-ok'>NORMAL</span></td>");
-        out.println("</tr>");
-
-        out.println("<tr>");
-        out.println("<td>Completed Auctions</td>");
-        out.println("<td>" + completedAuctions.size() + "</td>");
-        out.println("<td><span class='status-ok'>NORMAL</span></td>");
-        out.println("</tr>");
-
-        out.println("<tr>");
-        out.println("<td>Active Users</td>");
-        out.println("<td>" + activeUserCount + "</td>");
-        out.println("<td><span class='status-ok'>NORMAL</span></td>");
-        out.println("</tr>");
-
-        out.println("<tr>");
-        out.println("<td>Active Sessions</td>");
-        out.println("<td>" + activeSessions + "</td>");
-        out.println("<td><span class='status-ok'>NORMAL</span></td>");
-        out.println("</tr>");
-
-        out.println("</table>");
-        out.println("</div>");
-
-        // Service Status
-        out.println("<div class='section'>");
-        out.println("<h2>Service Status</h2>");
-        out.println("<div class='service-grid'>");
-
-        out.println("<div class='service-card'>");
-        out.println("<h3>EJB Container</h3>");
-        out.println("<p>Status: <span class='status-ok'>OPERATIONAL</span></p>");
-        out.println("<p>Uptime: 99.9%</p>");
-        out.println("</div>");
-
-        out.println("<div class='service-card'>");
-        out.println("<h3>JMS Messaging</h3>");
-        out.println("<p>Status: <span class='status-ok'>OPERATIONAL</span></p>");
-        out.println("<p>Queue: Empty</p>");
-        out.println("</div>");
-
-        out.println("<div class='service-card'>");
-        out.println("<h3>WebSocket</h3>");
-        out.println("<p>Status: <span class='status-ok'>OPERATIONAL</span></p>");
-        out.println("<p>Connections: " + activeSessions + "</p>");
-        out.println("</div>");
-
-        out.println("<div class='service-card'>");
-        out.println("<h3>Session Manager</h3>");
-        out.println("<p>Status: <span class='status-ok'>OPERATIONAL</span></p>");
-        out.println("<p>Active: " + activeSessions + "</p>");
-        out.println("</div>");
-
-        out.println("</div>");
-        out.println("</div>");
-
-        // System Information
-        out.println("<div class='section'>");
-        out.println("<h2>System Information</h2>");
-        out.println("<table class='info-table'>");
-
-        out.println("<tr>");
-        out.println("<td>Java Version</td>");
-        out.println("<td>" + System.getProperty("java.version") + "</td>");
-        out.println("</tr>");
-
-        out.println("<tr>");
-        out.println("<td>Jakarta EE Version</td>");
-        out.println("<td>10.0.0</td>");
-        out.println("</tr>");
-addCopyrightComment(out);
-        out.println("<tr>");
-        out.println("<td>Application Server</td>");
-        out.println("<td>GlassFish 7.x</td>");
-        out.println("</tr>");
-
-        out.println("<tr>");
-        out.println("<td>Application Version</td>");
-        out.println("<td>2.0.0-Enhanced</td>");
-        out.println("</tr>");
-
-        out.println("<tr>");
-        out.println("<td>Last Refresh</td>");
-        out.println("<td>" + LocalDateTime.now().format(formatter) + "</td>");
-        out.println("</tr>");
-
-        out.println("</table>");
-        out.println("</div>");
-
-        // Actions
-        out.println("<div class='section'>");
-        out.println("<div class='actions'>");
-        out.println("<button onclick='window.location.reload()' class='btn'>Refresh Status</button>");
-        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='btn'>Live Monitoring</a>");
-        out.println("</div>");
-        out.println("</div>");
-
-        out.println("</div>"); // End container
-
-        // Simple Footer
-        addFooter(out);
-
-        // Auto-refresh script
-        out.println("<script>");
-        out.println("setTimeout(function() {");
-        out.println("    window.location.reload();");
-        out.println("}, 30000);"); // Refresh every 30 seconds
-        out.println("</script>");
-
-        out.println("</body></html>");
-    }
-
-    private void addSimpleCSS(PrintWriter out) {
-        out.println("<style>");
-        out.println("/* Simple Professional System Status Styles */");
-        out.println("* {");
-        out.println("    margin: 0;");
-        out.println("    padding: 0;");
-        out.println("    box-sizing: border-box;");
-        out.println("}");
-        out.println("");
-        out.println("body {");
-        out.println("    font-family: Arial, sans-serif;");
-        out.println("    background-color: #f5f5f5;");
-        out.println("    color: #333;");
-        out.println("    line-height: 1.6;");
-        out.println("}");
-        out.println("");
-        out.println(".container {");
-        out.println("    max-width: 1200px;");
-        out.println("    margin: 0 auto;");
-        out.println("    padding: 0 20px;");
-        out.println("}");
-        out.println("");
-        out.println("/* Header */");
-        out.println(".header {");
-        out.println("    background-color: #fff;");
-        out.println("    border-bottom: 1px solid #ddd;");
-        out.println("    padding: 20px 0;");
-        out.println("    margin-bottom: 30px;");
-        out.println("}");
-        out.println("");
-        out.println(".header .container {");
-        out.println("    display: flex;");
-        out.println("    justify-content: space-between;");
-        out.println("    align-items: center;");
-        out.println("}");
-        out.println("");
-        out.println(".header h1 {");
-        out.println("    color: #333;");
-        out.println("    font-size: 24px;");
-        out.println("    font-weight: normal;");
-        out.println("}");
-        out.println("");
-        out.println(".back-link {");
-        out.println("    color: #007bff;");
-        out.println("    text-decoration: none;");
-        out.println("    font-size: 14px;");
-        out.println("}");
-        out.println("");
-        out.println(".back-link:hover {");
-        out.println("    text-decoration: underline;");
-        out.println("}");
-        out.println("");
-        out.println("/* Sections */");
-        out.println(".section {");
-        out.println("    background-color: #fff;");
-        out.println("    border: 1px solid #ddd;");
-        out.println("    border-radius: 4px;");
-        out.println("    padding: 20px;");
-        out.println("    margin-bottom: 20px;");
-        out.println("}");
-        out.println("");
-        out.println(".section h2 {");
-        out.println("    color: #333;");
-        out.println("    font-size: 18px;");
-        out.println("    font-weight: normal;");
-        out.println("    margin-bottom: 15px;");
-        out.println("    border-bottom: 1px solid #eee;");
-        out.println("    padding-bottom: 10px;");
-        out.println("}");
-        out.println("");
-        out.println("/* Tables */");
-        out.println(".status-table, .info-table {");
-        out.println("    width: 100%;");
-        out.println("    border-collapse: collapse;");
-        out.println("}");
-        out.println("");
-        out.println(".status-table th, .status-table td,");
-        out.println(".info-table th, .info-table td {");
-        out.println("    padding: 10px;");
-        out.println("    text-align: left;");
-        out.println("    border-bottom: 1px solid #eee;");
-        out.println("}");
-        out.println("");
-        out.println(".status-table th {");
-        out.println("    background-color: #f8f9fa;");
-        out.println("    font-weight: normal;");
-        out.println("    color: #666;");
-        out.println("}");
-        out.println("");
-        out.println(".status-table tr:nth-child(even) {");
-        out.println("    background-color: #f9f9f9;");
-        out.println("}");
-        out.println("");
-        out.println("/* Status indicators */");
-        out.println(".status-ok {");
-        out.println("    color: #28a745;");
-        out.println("    font-weight: bold;");
-        out.println("}");
-        out.println("");
-        out.println(".status-warning {");
-        out.println("    color: #ffc107;");
-        out.println("    font-weight: bold;");
-        out.println("}");
-        out.println("");
-        out.println(".status-error {");
-        out.println("    color: #dc3545;");
-        out.println("    font-weight: bold;");
-        out.println("}");
-        out.println("");
-        out.println("/* Service Grid */");
-        out.println(".service-grid {");
-        out.println("    display: grid;");
-        out.println("    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));");
-        out.println("    gap: 15px;");
-        out.println("}");
-        out.println("");
-        out.println(".service-card {");
-        out.println("    border: 1px solid #ddd;");
-        out.println("    border-radius: 4px;");
-        out.println("    padding: 15px;");
-        out.println("    background-color: #f9f9f9;");
-        out.println("}");
-        out.println("");
-        out.println(".service-card h3 {");
-        out.println("    color: #333;");
-        out.println("    font-size: 16px;");
-        out.println("    font-weight: normal;");
-        out.println("    margin-bottom: 10px;");
-        out.println("}");
-        out.println("");
-        out.println(".service-card p {");
-        out.println("    margin: 5px 0;");
-        out.println("    font-size: 14px;");
-        out.println("    color: #666;");
-        out.println("}");
-        out.println("");
-        out.println("/* Actions */");
-        out.println(".actions {");
-        out.println("    text-align: center;");
-        out.println("}");
-        out.println("");
-        out.println(".btn {");
-        out.println("    background-color: #007bff;");
-        out.println("    color: white;");
-        out.println("    padding: 10px 20px;");
-        out.println("    border: none;");
-        out.println("    border-radius: 4px;");
-        out.println("    text-decoration: none;");
-        out.println("    display: inline-block;");
-        out.println("    margin: 0 5px;");
-        out.println("    cursor: pointer;");
-        out.println("    font-size: 14px;");
-        out.println("}");
-        out.println("");
-        out.println(".btn:hover {");
-        out.println("    background-color: #0056b3;");
-        out.println("}");
-        out.println("");
-        out.println("/* Footer */");
-        out.println(".footer {");
-        out.println("    background-color: #fff;");
-        out.println("    border-top: 1px solid #ddd;");
-        out.println("    padding: 20px 0;");
-        out.println("    margin-top: 30px;");
-        out.println("    text-align: center;");
-        out.println("    color: #666;");
-        out.println("    font-size: 12px;");
-        out.println("}");
-        out.println("");
-        out.println(".footer p {");
-        out.println("    margin: 5px 0;");
-        out.println("}");
-        out.println("");
-        out.println("/* Responsive */");
-        out.println("@media (max-width: 768px) {");
-        out.println("    .header .container {");
-        out.println("        flex-direction: column;");
-        out.println("        gap: 10px;");
-        out.println("    }");
-        out.println("    ");
-        out.println("    .service-grid {");
-        out.println("        grid-template-columns: 1fr;");
-        out.println("    }");
-        out.println("    ");
-        out.println("    .container {");
-        out.println("        padding: 0 15px;");
-        out.println("    }");
-        out.println("}");
-        out.println("</style>");
-    }
-
-    // Show error page
+    /**
+     * V2 Show error page
+     */
     private void showError(PrintWriter out, String title, String message) {
         out.println("<!DOCTYPE html>");
         out.println("<html lang='en'>");
@@ -1944,14 +2559,14 @@ addCopyrightComment(out);
         out.println("</div>");
 
         out.println("<div class='error-content'>");
-        out.println("<div class='error-message'>");
+        out.println("<div class='empty-state'>");
         out.println("<i class='fas fa-exclamation-circle'></i>");
         out.println("<h2>" + escapeHtml(message) + "</h2>");
-        out.println("<div class='error-actions'>");
+        out.println("<div style='margin-top: 30px;'>");
         out.println("<a href='/AuctionSystem/auction/' class='btn btn-success'>");
         out.println("<i class='fas fa-home'></i> Go to Dashboard");
         out.println("</a>");
-        out.println("<a href='javascript:history.back()' class='btn btn-secondary'>");
+        out.println("<a href='javascript:history.back()' class='btn btn-secondary' style='margin-left: 15px;'>");
         out.println("<i class='fas fa-arrow-left'></i> Go Back");
         out.println("</a>");
         out.println("</div>");
@@ -1963,7 +2578,33 @@ addCopyrightComment(out);
         out.println("</body></html>");
     }
 
-    // Utility methods
+    // Helper methods from V1
+    private String getCurrentUser(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session == null) {
+            return null;
+        }
+
+        String sessionToken = (String) session.getAttribute("sessionToken");
+        String username = (String) session.getAttribute("username");
+
+        if (sessionToken != null && sessionManager.isSessionValid(sessionToken)) {
+            return username;
+        }
+
+        return null;
+    }
+
+    private void updateSessionActivity(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            String sessionToken = (String) session.getAttribute("sessionToken");
+            if (sessionToken != null) {
+                sessionManager.updateSessionActivity(sessionToken);
+            }
+        }
+    }
+
     private String getClientIpAddress(HttpServletRequest request) {
         String xForwardedFor = request.getHeader("X-Forwarded-For");
         if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
@@ -1977,36 +2618,12 @@ addCopyrightComment(out);
         return email.matches(emailRegex);
     }
 
-    // Show navigation bar
-    private void showNavigationBar(PrintWriter out, String currentUser, boolean isLoggedIn, boolean isAdmin) {
-        out.println("<div class='nav-bar'>");
-        out.println("<div class='nav-brand'>");
-        out.println("<h1><i class='fas fa-gavel'></i> Online Auction System</h1>");
-        if (isLoggedIn) {
-            out.println("<span class='nav-subtitle'>Welcome to the premier online auction platform</span>");
-        }
-        out.println("</div>");
-
-        out.println("<div class='nav-actions'>");
-        if (isLoggedIn) {
-            out.println("<span class='nav-user'>");
-            out.println("<i class='fas fa-user'></i> " + escapeHtml(currentUser));
-            if (isAdmin) {
-                out.println("<span class='admin-indicator'><i class='fas fa-crown'></i></span>");
-            }
-            out.println("</span>");
-        }
-
-        out.println("<a href='/AuctionSystem/auction/status' class='btn btn-small btn-secondary'>");
-        out.println("<i class='fas fa-heartbeat'></i> Status");
-        out.println("</a>");
-
-        if (isLoggedIn) {
-            out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small logout-btn'>");
-            out.println("<i class='fas fa-sign-out-alt'></i> Logout");
-            out.println("</a>");
-        }
-        out.println("</div>");
-        out.println("</div>");
+    private String escapeHtml(String input) {
+        if (input == null) return "";
+        return input.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#x27;");
     }
 }
