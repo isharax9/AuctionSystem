@@ -1,29 +1,26 @@
-/* ===== ENHANCED AUCTION SYSTEM STYLES ===== */
-/* Copyright (c) 2025 Ishara Lakshitha (@isharax9). All rights reserved. */
 
-/* Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+             * {
+                 margin: 0;
+                 padding: 0;
+                 box-sizing: border-box;
+             }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
+    color: #333;
     line-height: 1.6;
 }
 
+/* Container */
 .container {
     max-width: 1400px;
-    margin: 0 auto;
     background: white;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     overflow: hidden;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin: 20px auto;
 }
 
 /* Navigation Bar */
@@ -48,6 +45,43 @@ body {
     gap: 10px;
 }
 
+/* Navigation Links (from second file) */
+.nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+.nav-link.admin-link {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    font-weight: bold;
+}
+
+/* Header Style (from second file) */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+    border-bottom: 2px solid #eee;
+}
+.header h1 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
 /* Enhanced Duration Selector */
 .duration-selector {
     display: grid;
@@ -63,6 +97,7 @@ body {
 .time-input-group {
     display: flex;
     flex-direction: column;
+    gap: 5px;
 }
 
 .time-input-group label {
@@ -72,6 +107,7 @@ body {
     font-size: 0.9rem;
 }
 
+/* Use input/select padding/borders from first block */
 .time-input-group select {
     padding: 8px 12px;
     border: 1px solid #ced4da;
@@ -80,7 +116,6 @@ body {
     font-size: 1rem;
     transition: border-color 0.3s ease;
 }
-
 .time-input-group select:focus {
     outline: none;
     border-color: #007bff;
@@ -94,7 +129,6 @@ body {
     border-left: 4px solid #007bff;
     border-radius: 4px;
 }
-
 .duration-help small {
     color: #495057;
     font-size: 0.85rem;
@@ -109,7 +143,6 @@ body {
     padding-bottom: 10px;
     border-bottom: 2px solid #e9ecef;
 }
-
 .section-header h2 {
     color: #333;
     font-size: 1.5rem;
@@ -117,7 +150,6 @@ body {
     align-items: center;
     gap: 10px;
 }
-
 .badge {
     background: #007bff;
     color: white;
@@ -126,7 +158,6 @@ body {
     font-size: 0.8rem;
     font-weight: 600;
 }
-
 .badge-secondary {
     background: #6c757d;
 }
@@ -139,25 +170,22 @@ body {
     border-radius: 10px;
     border-left: 5px solid #007bff;
 }
-
 .history-section {
     border-left-color: #6c757d;
 }
 
-/* Enhanced Table Styles */
+/* Table Styles */
 .table-container {
     overflow-x: auto;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
-
 .auction-table {
     width: 100%;
     border-collapse: collapse;
     background: white;
     font-size: 0.9rem;
 }
-
 .auction-table th {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -168,23 +196,19 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
-
 .auction-table td {
     padding: 12px;
     border-bottom: 1px solid #e9ecef;
     vertical-align: middle;
 }
-
 .auction-row {
     transition: all 0.3s ease;
 }
-
 .auction-row:hover {
     background: #f8f9fa;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
-
 .history-row:hover {
     background: #f1f3f4;
 }
@@ -201,30 +225,25 @@ body {
     color: #28a745;
     font-size: 1.1rem;
 }
-
 .winner-price {
     color: #fd7e14;
     background: #fff3cd;
     padding: 4px 8px;
     border-radius: 4px;
 }
-
 .no-winner {
     color: #6c757d;
     font-style: italic;
 }
-
 .bidder {
     font-weight: 500;
     color: #495057;
 }
-
 .end-time {
     font-family: 'Courier New', monospace;
     font-size: 0.85rem;
     color: #6c757d;
 }
-
 .bid-count {
     text-align: center;
     font-weight: bold;
@@ -237,7 +256,6 @@ body {
     align-items: center;
     gap: 5px;
 }
-
 .winner-badge {
     background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
     color: #856404;
@@ -249,7 +267,6 @@ body {
     align-items: center;
     gap: 4px;
 }
-
 .winner-badge i {
     color: #d39e00;
 }
@@ -259,7 +276,6 @@ body {
     font-weight: 600;
     font-size: 0.85rem;
 }
-
 .status-badge {
     padding: 4px 8px;
     border-radius: 4px;
@@ -271,12 +287,10 @@ body {
     align-items: center;
     gap: 4px;
 }
-
 .status-badge.active {
     background: #d4edda;
     color: #155724;
 }
-
 .status-badge.completed {
     background: #f8d7da;
     color: #721c24;
@@ -307,12 +321,10 @@ body {
     gap: 15px;
     transition: all 0.3s ease;
 }
-
 .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.15);
 }
-
 .stat-icon {
     font-size: 2rem;
     width: 60px;
@@ -323,40 +335,32 @@ body {
     justify-content: center;
     color: white;
 }
-
 .active-stat .stat-icon {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
 }
-
 .completed-stat .stat-icon {
     background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
 }
-
 .total-stat .stat-icon {
     background: linear-gradient(135deg, #fd7e14 0%, #e83e8c 100%);
 }
-
 .notifications-stat .stat-icon {
     background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
 }
-
 .stat-info {
     flex: 1;
 }
-
 .stat-value {
     font-size: 2rem;
     font-weight: bold;
     color: #333;
     line-height: 1;
 }
-
 .stat-label {
     color: #6c757d;
     font-size: 0.9rem;
     margin-top: 2px;
 }
-
 .stat-link {
     text-decoration: none;
     color: inherit;
@@ -366,7 +370,6 @@ body {
 .auction-details-container {
     padding: 30px;
 }
-
 .auction-info-section {
     background: #f8f9fa;
     border-radius: 10px;
@@ -374,7 +377,6 @@ body {
     margin-bottom: 30px;
     border-left: 5px solid #007bff;
 }
-
 .auction-header {
     display: flex;
     justify-content: space-between;
@@ -383,26 +385,22 @@ body {
     padding-bottom: 15px;
     border-bottom: 2px solid #dee2e6;
 }
-
 .auction-title-section h2 {
     color: #333;
     font-size: 2rem;
     margin-bottom: 5px;
 }
-
 .auction-details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 30px;
 }
-
 .detail-card {
     background: white;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
-
 .detail-card h3 {
     color: #333;
     margin-bottom: 20px;
@@ -411,18 +409,15 @@ body {
     gap: 10px;
     font-size: 1.2rem;
 }
-
 .detail-item {
     margin-bottom: 15px;
     padding-bottom: 10px;
     border-bottom: 1px solid #f1f3f4;
 }
-
 .detail-item:last-child {
     border-bottom: none;
     margin-bottom: 0;
 }
-
 .detail-item strong {
     color: #495057;
     display: block;
@@ -438,14 +433,12 @@ body {
     background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
     border-radius: 8px;
 }
-
 .bid-amount {
     font-size: 3rem;
     font-weight: bold;
     color: #1976d2;
     line-height: 1;
 }
-
 .bid-label {
     color: #666;
     font-size: 0.9rem;
@@ -459,7 +452,6 @@ body {
     text-align: center;
     margin: 20px 0;
 }
-
 .winner-badge-large {
     background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
     color: #856404;
@@ -467,13 +459,11 @@ body {
     border-radius: 10px;
     border: 2px solid #d39e00;
 }
-
 .winner-badge-large i {
     font-size: 2rem;
     margin-bottom: 10px;
     color: #d39e00;
 }
-
 .winner-title {
     display: block;
     font-weight: bold;
@@ -482,7 +472,6 @@ body {
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-
 .winner-name {
     display: block;
     font-size: 1.5rem;
@@ -493,32 +482,27 @@ body {
 .completion-info-section {
     margin-bottom: 30px;
 }
-
 .completion-card {
     background: white;
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-
 .completion-success {
     background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
     color: #155724;
     padding: 25px;
     border-left: 5px solid #28a745;
 }
-
 .completion-no-winner {
     background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
     color: #721c24;
     padding: 25px;
     border-left: 5px solid #dc3545;
 }
-
 .completion-details {
     margin-top: 15px;
 }
-
 .completion-details p {
     margin-bottom: 8px;
     font-size: 1rem;
@@ -528,19 +512,16 @@ body {
 .bidding-section {
     margin-bottom: 30px;
 }
-
 .bidding-card {
     background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
     border: 2px solid #28a745;
     border-radius: 10px;
     padding: 25px;
 }
-
 .bid-input-section {
     display: grid;
     gap: 20px;
 }
-
 .current-bid-info {
     background: white;
     padding: 15px;
@@ -548,19 +529,16 @@ body {
     text-align: center;
     border: 1px solid #dee2e6;
 }
-
 .current-bid-label {
     color: #6c757d;
     font-size: 0.9rem;
     margin-right: 10px;
 }
-
 .current-bid-amount {
     font-size: 1.5rem;
     font-weight: bold;
     color: #28a745;
 }
-
 .bid-input-group label {
     display: block;
     font-weight: bold;
@@ -570,7 +548,6 @@ body {
     align-items: center;
     gap: 8px;
 }
-
 .bid-input-group input {
     width: 100%;
     padding: 12px;
@@ -580,13 +557,11 @@ body {
     text-align: center;
     transition: border-color 0.3s ease;
 }
-
 .bid-input-group input:focus {
     outline: none;
     border-color: #28a745;
     box-shadow: 0 0 0 3px rgba(40,167,69,0.25);
 }
-
 .bid-input-group small {
     color: #6c757d;
     font-size: 0.85rem;
@@ -610,26 +585,21 @@ body {
     text-align: center;
     justify-content: center;
 }
-
 .btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
-
 .btn-success {
     background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
     color: white;
 }
-
 .btn-success:hover {
     background: linear-gradient(135deg, #218838 0%, #1ea679 100%);
 }
-
 .btn-secondary {
     background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
     color: white;
 }
-
 .btn-bid {
     background: linear-gradient(135deg, #fd7e14 0%, #e83e8c 100%);
     color: white;
@@ -637,12 +607,10 @@ body {
     padding: 15px 30px;
     width: 100%;
 }
-
 .btn-small {
     padding: 6px 12px;
     font-size: 0.8rem;
 }
-
 .btn-create {
     width: 100%;
     padding: 12px;
@@ -656,12 +624,10 @@ body {
     padding: 25px;
     border-left: 5px solid #6c757d;
 }
-
 .bid-history-table {
     overflow-x: auto;
     margin-top: 15px;
 }
-
 .bid-history-table table {
     width: 100%;
     border-collapse: collapse;
@@ -670,7 +636,6 @@ body {
     overflow: hidden;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
-
 .bid-history-table th {
     background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
     color: white;
@@ -679,32 +644,26 @@ body {
     font-weight: 600;
     font-size: 0.85rem;
 }
-
 .bid-history-table td {
     padding: 12px;
     border-bottom: 1px solid #e9ecef;
 }
-
 .winning-bid {
     background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
     border-left: 4px solid #ffc107;
 }
-
 .winning-bid .bid-amount {
     color: #856404;
     font-weight: bold;
 }
-
 .status-badge.winning {
     background: #ffc107;
     color: #212529;
 }
-
 .status-badge.winner {
     background: #28a745;
     color: white;
 }
-
 .status-badge.outbid {
     background: #6c757d;
     color: white;
@@ -716,13 +675,11 @@ body {
     padding: 40px 20px;
     color: #6c757d;
 }
-
 .empty-state i {
     font-size: 4rem;
     margin-bottom: 20px;
     opacity: 0.5;
 }
-
 .empty-state p {
     font-size: 1.1rem;
     margin-bottom: 10px;
@@ -736,19 +693,16 @@ body {
     border-left: 4px solid;
     font-weight: 500;
 }
-
 .message-success {
     background: #d4edda;
     color: #155724;
     border-left-color: #28a745;
 }
-
 .message-error {
     background: #f8d7da;
     color: #721c24;
     border-left-color: #dc3545;
 }
-
 .message-info {
     background: #d1ecf1;
     color: #0c5460;
@@ -763,7 +717,6 @@ body {
     border-left: 5px solid #007bff;
     margin-bottom: 20px;
 }
-
 .form-container h3 {
     color: #333;
     margin-bottom: 20px;
@@ -771,11 +724,9 @@ body {
     align-items: center;
     gap: 10px;
 }
-
 .form-group {
     margin-bottom: 20px;
 }
-
 .form-group label {
     display: block;
     font-weight: 600;
@@ -785,7 +736,6 @@ body {
     align-items: center;
     gap: 8px;
 }
-
 .form-group input,
 .form-group textarea,
 .form-group select {
@@ -796,7 +746,6 @@ body {
     font-size: 1rem;
     transition: border-color 0.3s ease;
 }
-
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
@@ -804,7 +753,6 @@ body {
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
 }
-
 .form-group textarea {
     resize: vertical;
     min-height: 80px;
@@ -817,7 +765,6 @@ body {
     gap: 30px;
     padding: 30px;
 }
-
 .left-panel, .right-panel {
     display: flex;
     flex-direction: column;
@@ -831,24 +778,53 @@ body {
     text-align: center;
     border-top: 1px solid #dee2e6;
 }
-
 .footer-content {
     color: #6c757d;
     font-size: 0.9rem;
 }
-
 .footer-links {
     margin: 10px 0;
 }
-
 .footer-links a {
     color: #007bff;
     text-decoration: none;
     margin: 0 10px;
 }
-
 .footer-links a:hover {
     text-decoration: underline;
+}
+
+/* Real-time WebSocket UI (from second file, unique) */
+.live-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+    animation: pulse 2s infinite;
+}
+.live-indicator.disconnected {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    box-shadow: 0 4px 12px rgba(220,53,69,0.3);
+}
+@keyframes pulse {
+    0% { box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+    50% { box-shadow: 0 4px 20px rgba(40,167,69,0.6); }
+    100% { box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+}
+.bid-update-animation {
+    animation: bidUpdatePulse 1s ease-out;
+}
+@keyframes bidUpdatePulse {
+    0% { background: #fff3cd; transform: scale(1); }
+    50% { background: #ffc107; transform: scale(1.02); }
+    100% { background: #fff3cd; transform: scale(1); }
 }
 
 /* Responsive Design */
@@ -857,7 +833,6 @@ body {
         margin: 10px;
         border-radius: 10px;
     }
-
     .auction-details-grid {
         grid-template-columns: 1fr;
     }
@@ -868,48 +843,43 @@ body {
         grid-template-columns: 1fr;
         padding: 20px;
     }
-
     .nav-bar {
         padding: 15px 20px;
         flex-direction: column;
         gap: 15px;
     }
-
     .nav-bar h1 {
         font-size: 1.5rem;
     }
-
     .auction-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-
     .duration-selector {
         grid-template-columns: 1fr;
     }
-
     .stats-grid {
         grid-template-columns: 1fr;
     }
-
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
     }
-
     .table-container {
         font-size: 0.8rem;
     }
-
     .auction-table th,
     .auction-table td {
         padding: 8px 6px;
     }
-
     .bid-amount {
         font-size: 2rem;
+    }
+    .container {
+        margin: 10px;
+        padding: 20px;
     }
 }
 
@@ -918,12 +888,10 @@ body {
         margin: 5px;
         border-radius: 8px;
     }
-
     .auction-section {
         margin: 15px;
         padding: 15px;
     }
-
     .form-container,
     .auction-info-section,
     .completion-info-section,
@@ -933,7 +901,7 @@ body {
     }
 }
 
-/* Animation and Transitions */
+/* Animations */
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -944,7 +912,6 @@ body {
         transform: translateY(0);
     }
 }
-
 .auction-row,
 .stat-card,
 .detail-card {
@@ -958,30 +925,12 @@ body {
     .btn {
         display: none;
     }
-
     .container {
         box-shadow: none;
         border: 1px solid #ddd;
     }
-
     body {
         background: white;
-    }
-}
-
-/* High Contrast Mode */
-@media (prefers-contrast: high) {
-    .btn {
-        border: 2px solid currentColor;
-    }
-
-    .auction-table th {
-        background: #000;
-        color: #fff;
-    }
-
-    .status-badge {
-        border: 1px solid currentColor;
     }
 }
 
