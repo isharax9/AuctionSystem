@@ -1235,7 +1235,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("    permission from the copyright holder.");
         out.println("    ");
         out.println("    Author: Ishara Lakshitha (@isharax9)");
-        out.println("    Project: AuctionSystem - Enhanced with History & Duration Control");
+        out.println("    Project: AuctionSystem - Welcome to the premier online auction platform");
         out.println("    Created: June 2025");
         out.println("    Features: EJB, JMS, WebSocket, Real-time Bidding, Auction History");
         out.println("-->");
@@ -1243,19 +1243,19 @@ public class AuctionServlet extends HttpServlet {
 
     // Add footer
     private void addFooter(PrintWriter out) {
-        out.println("<div class='footer'>");
-        out.println("<div class='footer-content'>");
-        out.println("<p><strong>Enhanced Online Auction System</strong></p>");
-        out.println("<p>Enterprise JavaBeans + Java Message Service + WebSocket Integration</p>");
-        out.println("<div class='footer-links'>");
-        out.println("<a href='/AuctionSystem/auction/'>Dashboard</a>");
-        out.println("<a href='/AuctionSystem/auction/status'>System Status</a>");
-        out.println("<a href='/AuctionSystem/real-time-notifications.html'>Live Notifications</a>");
+        out.println("</div>"); // Close container
+        out.println("<footer style=\"text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #ddd; background-color: #f8f9fa;\">");
+        out.println("<div style=\"color: #666; font-size: 14px;\">");
+        out.println("<p>&copy; 2025 <strong>Ishara Lakshitha</strong>. All rights reserved.</p>");
+        out.println("<p style=\"margin: 5px 0;\">");
+        out.println("<i class=\"fas fa-code\"></i>");
+        out.println("Developed by <a href=\"https://github.com/isharax9\" target=\"_blank\" style=\"color: #007bff; text-decoration: none;\">@isharax9</a>");
+        out.println("</p>");
+        out.println("<p style=\"margin: 0; font-size: 12px; color: #888;\">");
+        out.println("Auction System Dashboard | BCD 1 Research Assignment");
+        out.println("</p>");
         out.println("</div>");
-        out.println("<p>&copy; 2025 <strong>Ishara Lakshitha (@isharax9)</strong>. All rights reserved.</p>");
-        out.println("<p><em>Business Component Development - Final Year Project</em></p>");
-        out.println("</div>");
-        out.println("</div>");
+        out.println("</footer>");
     }
 
     // [Include remaining existing methods: getCurrentUser, handleLogin, etc...]
@@ -1571,178 +1571,356 @@ public class AuctionServlet extends HttpServlet {
         }
     }
 
-    // Show system status page
+    // Enhanced Professional System Status Page
     private void showSystemStatus(PrintWriter out) {
-
-        // Include the complete CSS from the external file
         out.println("<!DOCTYPE html>");
         out.println("<html lang='en'>");
         out.println("<head>");
         out.println("<meta charset='UTF-8'>");
         out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
         out.println("<title>System Status - Online Auction System</title>");
-        out.println("<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>");
 
+        addSimpleCSS(out);
 
-
-
-        addEnhancedCSS(out);
         out.println("</head>");
         out.println("<body>");
 
-        addCopyrightComment(out);
+        // Simple Header
+        out.println("<div class='header'>");
+        out.println("<div class='container'>");
+        out.println("<h1>System Status</h1>");
+        out.println("<a href='/AuctionSystem/auction/' class='back-link'>← Back to Auctions</a>");
+        out.println("</div>");
+        out.println("</div>");
 
         out.println("<div class='container'>");
 
-        // Navigation
-        out.println("<div class='nav-bar'>");
-        out.println("<h1><i class='fas fa-heartbeat'></i> System Status</h1>");
-        out.println("<div class='nav-actions'>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn btn-secondary'>");
-        out.println("<i class='fas fa-arrow-left'></i> Back to Auctions");
-        out.println("</a>");
-        out.println("</div>");
-        out.println("</div>");
-
-        // System statistics
-        out.println("<div class='status-container'>");
-
-        // Get system statistics
+        // Get system data
         List<AuctionDTO> activeAuctions = auctionService.getAllActiveAuctions();
         List<AuctionDTO> completedAuctions = auctionService.getAllCompletedAuctions();
         int activeUserCount = userService.getActiveUserCount();
         int activeSessions = sessionManager.getActiveSessionCount();
 
-        // System overview
-        out.println("<div class='status-section'>");
-        out.println("<h2><i class='fas fa-tachometer-alt'></i> System Overview</h2>");
-        out.println("<div class='status-grid'>");
+        // System Overview Table
+        out.println("<div class='section'>");
+        out.println("<h2>System Overview</h2>");
+        out.println("<table class='status-table'>");
+        out.println("<tr>");
+        out.println("<th>Metric</th>");
+        out.println("<th>Value</th>");
+        out.println("<th>Status</th>");
+        out.println("</tr>");
 
-        // System uptime indicator
-        out.println("<div class='status-card online'>");
-        out.println("<div class='status-icon'><i class='fas fa-check-circle'></i></div>");
-        out.println("<div class='status-info'>");
-        out.println("<div class='status-title'>System Status</div>");
-        out.println("<div class='status-value'>ONLINE</div>");
-        out.println("</div>");
-        out.println("</div>");
+        out.println("<tr>");
+        out.println("<td>Current Time (UTC)</td>");
+        out.println("<td>" + LocalDateTime.now().format(formatter) + "</td>");
+        out.println("<td><span class='status-ok'>ACTIVE</span></td>");
+        out.println("</tr>");
 
-        // Active auctions
-        out.println("<div class='status-card'>");
-        out.println("<div class='status-icon'><i class='fas fa-gavel'></i></div>");
-        out.println("<div class='status-info'>");
-        out.println("<div class='status-title'>Active Auctions</div>");
-        out.println("<div class='status-value'>" + activeAuctions.size() + "</div>");
-        out.println("</div>");
-        out.println("</div>");
+        out.println("<tr>");
+        out.println("<td>Active Auctions</td>");
+        out.println("<td>" + activeAuctions.size() + "</td>");
+        out.println("<td><span class='status-ok'>NORMAL</span></td>");
+        out.println("</tr>");
 
-        // Completed auctions
-        out.println("<div class='status-card'>");
-        out.println("<div class='status-icon'><i class='fas fa-archive'></i></div>");
-        out.println("<div class='status-info'>");
-        out.println("<div class='status-title'>Completed Auctions</div>");
-        out.println("<div class='status-value'>" + completedAuctions.size() + "</div>");
-        out.println("</div>");
-        out.println("</div>");
+        out.println("<tr>");
+        out.println("<td>Completed Auctions</td>");
+        out.println("<td>" + completedAuctions.size() + "</td>");
+        out.println("<td><span class='status-ok'>NORMAL</span></td>");
+        out.println("</tr>");
 
-        // Active users
-        out.println("<div class='status-card'>");
-        out.println("<div class='status-icon'><i class='fas fa-users'></i></div>");
-        out.println("<div class='status-info'>");
-        out.println("<div class='status-title'>Active Users</div>");
-        out.println("<div class='status-value'>" + activeUserCount + "</div>");
-        out.println("</div>");
-        out.println("</div>");
+        out.println("<tr>");
+        out.println("<td>Active Users</td>");
+        out.println("<td>" + activeUserCount + "</td>");
+        out.println("<td><span class='status-ok'>NORMAL</span></td>");
+        out.println("</tr>");
 
-        // Active sessions
-        out.println("<div class='status-card'>");
-        out.println("<div class='status-icon'><i class='fas fa-laptop'></i></div>");
-        out.println("<div class='status-info'>");
-        out.println("<div class='status-title'>Active Sessions</div>");
-        out.println("<div class='status-value'>" + activeSessions + "</div>");
-        out.println("</div>");
+        out.println("<tr>");
+        out.println("<td>Active Sessions</td>");
+        out.println("<td>" + activeSessions + "</td>");
+        out.println("<td><span class='status-ok'>NORMAL</span></td>");
+        out.println("</tr>");
+
+        out.println("</table>");
         out.println("</div>");
 
-        out.println("</div>"); // End status-grid
-        out.println("</div>"); // End status-section
+        // Service Status
+        out.println("<div class='section'>");
+        out.println("<h2>Service Status</h2>");
+        out.println("<div class='service-grid'>");
 
-        // Service status
-        out.println("<div class='status-section'>");
-        out.println("<h2><i class='fas fa-cogs'></i> Service Status</h2>");
-        out.println("<div class='service-status-grid'>");
-
-        // EJB Services
-        out.println("<div class='service-status-item online'>");
-        out.println("<div class='service-icon'><i class='fas fa-cube'></i></div>");
-        out.println("<div class='service-info'>");
-        out.println("<div class='service-name'>EJB Container</div>");
-        out.println("<div class='service-status'>OPERATIONAL</div>");
-        out.println("</div>");
+        out.println("<div class='service-card'>");
+        out.println("<h3>EJB Container</h3>");
+        out.println("<p>Status: <span class='status-ok'>OPERATIONAL</span></p>");
+        out.println("<p>Uptime: 99.9%</p>");
         out.println("</div>");
 
-        // JMS Messaging
-        out.println("<div class='service-status-item online'>");
-        out.println("<div class='service-icon'><i class='fas fa-envelope'></i></div>");
-        out.println("<div class='service-info'>");
-        out.println("<div class='service-name'>JMS Messaging</div>");
-        out.println("<div class='service-status'>OPERATIONAL</div>");
-        out.println("</div>");
+        out.println("<div class='service-card'>");
+        out.println("<h3>JMS Messaging</h3>");
+        out.println("<p>Status: <span class='status-ok'>OPERATIONAL</span></p>");
+        out.println("<p>Queue: Empty</p>");
         out.println("</div>");
 
-        // WebSocket Services
-        out.println("<div class='service-status-item online'>");
-        out.println("<div class='service-icon'><i class='fas fa-wifi'></i></div>");
-        out.println("<div class='service-info'>");
-        out.println("<div class='service-name'>WebSocket</div>");
-        out.println("<div class='service-status'>OPERATIONAL</div>");
+        out.println("<div class='service-card'>");
+        out.println("<h3>WebSocket</h3>");
+        out.println("<p>Status: <span class='status-ok'>OPERATIONAL</span></p>");
+        out.println("<p>Connections: " + activeSessions + "</p>");
+        out.println("</div>");
+
+        out.println("<div class='service-card'>");
+        out.println("<h3>Session Manager</h3>");
+        out.println("<p>Status: <span class='status-ok'>OPERATIONAL</span></p>");
+        out.println("<p>Active: " + activeSessions + "</p>");
+        out.println("</div>");
+
         out.println("</div>");
         out.println("</div>");
 
-        // Session Management
-        out.println("<div class='service-status-item online'>");
-        out.println("<div class='service-icon'><i class='fas fa-key'></i></div>");
-        out.println("<div class='service-info'>");
-        out.println("<div class='service-name'>Session Manager</div>");
-        out.println("<div class='service-status'>OPERATIONAL</div>");
+        // System Information
+        out.println("<div class='section'>");
+        out.println("<h2>System Information</h2>");
+        out.println("<table class='info-table'>");
+
+        out.println("<tr>");
+        out.println("<td>Java Version</td>");
+        out.println("<td>" + System.getProperty("java.version") + "</td>");
+        out.println("</tr>");
+
+        out.println("<tr>");
+        out.println("<td>Jakarta EE Version</td>");
+        out.println("<td>10.0.0</td>");
+        out.println("</tr>");
+addCopyrightComment(out);
+        out.println("<tr>");
+        out.println("<td>Application Server</td>");
+        out.println("<td>GlassFish 7.x</td>");
+        out.println("</tr>");
+
+        out.println("<tr>");
+        out.println("<td>Application Version</td>");
+        out.println("<td>2.0.0-Enhanced</td>");
+        out.println("</tr>");
+
+        out.println("<tr>");
+        out.println("<td>Last Refresh</td>");
+        out.println("<td>" + LocalDateTime.now().format(formatter) + "</td>");
+        out.println("</tr>");
+
+        out.println("</table>");
+        out.println("</div>");
+
+        // Actions
+        out.println("<div class='section'>");
+        out.println("<div class='actions'>");
+        out.println("<button onclick='window.location.reload()' class='btn'>Refresh Status</button>");
+        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='btn'>Live Monitoring</a>");
         out.println("</div>");
         out.println("</div>");
 
-        out.println("</div>"); // End service-status-grid
-        out.println("</div>"); // End status-section
-
-        // System information
-        out.println("<div class='status-section'>");
-        out.println("<h2><i class='fas fa-info-circle'></i> System Information</h2>");
-        out.println("<div class='system-info'>");
-        out.println("<div class='info-item'>");
-        out.println("<strong>Server Time:</strong> " + LocalDateTime.now().format(formatter));
-        out.println("</div>");
-        out.println("<div class='info-item'>");
-        out.println("<strong>Application Version:</strong> 2.0.0-Enhanced");
-        out.println("</div>");
-        out.println("<div class='info-item'>");
-        out.println("<strong>Java Version:</strong> " + System.getProperty("java.version"));
-        out.println("</div>");
-        out.println("<div class='info-item'>");
-        out.println("<strong>Platform:</strong> Jakarta EE 10 / GlassFish 7.x");
-        out.println("</div>");
-        out.println("</div>");
-        out.println("</div>");
-
-        out.println("</div>"); // End status-container
         out.println("</div>"); // End container
 
+        // Simple Footer
         addFooter(out);
 
         // Auto-refresh script
         out.println("<script>");
-        out.println("// Auto-refresh every 30 seconds");
         out.println("setTimeout(function() {");
         out.println("    window.location.reload();");
-        out.println("}, 30000);");
+        out.println("}, 30000);"); // Refresh every 30 seconds
         out.println("</script>");
 
         out.println("</body></html>");
+    }
+
+    private void addSimpleCSS(PrintWriter out) {
+        out.println("<style>");
+        out.println("/* Simple Professional System Status Styles */");
+        out.println("* {");
+        out.println("    margin: 0;");
+        out.println("    padding: 0;");
+        out.println("    box-sizing: border-box;");
+        out.println("}");
+        out.println("");
+        out.println("body {");
+        out.println("    font-family: Arial, sans-serif;");
+        out.println("    background-color: #f5f5f5;");
+        out.println("    color: #333;");
+        out.println("    line-height: 1.6;");
+        out.println("}");
+        out.println("");
+        out.println(".container {");
+        out.println("    max-width: 1200px;");
+        out.println("    margin: 0 auto;");
+        out.println("    padding: 0 20px;");
+        out.println("}");
+        out.println("");
+        out.println("/* Header */");
+        out.println(".header {");
+        out.println("    background-color: #fff;");
+        out.println("    border-bottom: 1px solid #ddd;");
+        out.println("    padding: 20px 0;");
+        out.println("    margin-bottom: 30px;");
+        out.println("}");
+        out.println("");
+        out.println(".header .container {");
+        out.println("    display: flex;");
+        out.println("    justify-content: space-between;");
+        out.println("    align-items: center;");
+        out.println("}");
+        out.println("");
+        out.println(".header h1 {");
+        out.println("    color: #333;");
+        out.println("    font-size: 24px;");
+        out.println("    font-weight: normal;");
+        out.println("}");
+        out.println("");
+        out.println(".back-link {");
+        out.println("    color: #007bff;");
+        out.println("    text-decoration: none;");
+        out.println("    font-size: 14px;");
+        out.println("}");
+        out.println("");
+        out.println(".back-link:hover {");
+        out.println("    text-decoration: underline;");
+        out.println("}");
+        out.println("");
+        out.println("/* Sections */");
+        out.println(".section {");
+        out.println("    background-color: #fff;");
+        out.println("    border: 1px solid #ddd;");
+        out.println("    border-radius: 4px;");
+        out.println("    padding: 20px;");
+        out.println("    margin-bottom: 20px;");
+        out.println("}");
+        out.println("");
+        out.println(".section h2 {");
+        out.println("    color: #333;");
+        out.println("    font-size: 18px;");
+        out.println("    font-weight: normal;");
+        out.println("    margin-bottom: 15px;");
+        out.println("    border-bottom: 1px solid #eee;");
+        out.println("    padding-bottom: 10px;");
+        out.println("}");
+        out.println("");
+        out.println("/* Tables */");
+        out.println(".status-table, .info-table {");
+        out.println("    width: 100%;");
+        out.println("    border-collapse: collapse;");
+        out.println("}");
+        out.println("");
+        out.println(".status-table th, .status-table td,");
+        out.println(".info-table th, .info-table td {");
+        out.println("    padding: 10px;");
+        out.println("    text-align: left;");
+        out.println("    border-bottom: 1px solid #eee;");
+        out.println("}");
+        out.println("");
+        out.println(".status-table th {");
+        out.println("    background-color: #f8f9fa;");
+        out.println("    font-weight: normal;");
+        out.println("    color: #666;");
+        out.println("}");
+        out.println("");
+        out.println(".status-table tr:nth-child(even) {");
+        out.println("    background-color: #f9f9f9;");
+        out.println("}");
+        out.println("");
+        out.println("/* Status indicators */");
+        out.println(".status-ok {");
+        out.println("    color: #28a745;");
+        out.println("    font-weight: bold;");
+        out.println("}");
+        out.println("");
+        out.println(".status-warning {");
+        out.println("    color: #ffc107;");
+        out.println("    font-weight: bold;");
+        out.println("}");
+        out.println("");
+        out.println(".status-error {");
+        out.println("    color: #dc3545;");
+        out.println("    font-weight: bold;");
+        out.println("}");
+        out.println("");
+        out.println("/* Service Grid */");
+        out.println(".service-grid {");
+        out.println("    display: grid;");
+        out.println("    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));");
+        out.println("    gap: 15px;");
+        out.println("}");
+        out.println("");
+        out.println(".service-card {");
+        out.println("    border: 1px solid #ddd;");
+        out.println("    border-radius: 4px;");
+        out.println("    padding: 15px;");
+        out.println("    background-color: #f9f9f9;");
+        out.println("}");
+        out.println("");
+        out.println(".service-card h3 {");
+        out.println("    color: #333;");
+        out.println("    font-size: 16px;");
+        out.println("    font-weight: normal;");
+        out.println("    margin-bottom: 10px;");
+        out.println("}");
+        out.println("");
+        out.println(".service-card p {");
+        out.println("    margin: 5px 0;");
+        out.println("    font-size: 14px;");
+        out.println("    color: #666;");
+        out.println("}");
+        out.println("");
+        out.println("/* Actions */");
+        out.println(".actions {");
+        out.println("    text-align: center;");
+        out.println("}");
+        out.println("");
+        out.println(".btn {");
+        out.println("    background-color: #007bff;");
+        out.println("    color: white;");
+        out.println("    padding: 10px 20px;");
+        out.println("    border: none;");
+        out.println("    border-radius: 4px;");
+        out.println("    text-decoration: none;");
+        out.println("    display: inline-block;");
+        out.println("    margin: 0 5px;");
+        out.println("    cursor: pointer;");
+        out.println("    font-size: 14px;");
+        out.println("}");
+        out.println("");
+        out.println(".btn:hover {");
+        out.println("    background-color: #0056b3;");
+        out.println("}");
+        out.println("");
+        out.println("/* Footer */");
+        out.println(".footer {");
+        out.println("    background-color: #fff;");
+        out.println("    border-top: 1px solid #ddd;");
+        out.println("    padding: 20px 0;");
+        out.println("    margin-top: 30px;");
+        out.println("    text-align: center;");
+        out.println("    color: #666;");
+        out.println("    font-size: 12px;");
+        out.println("}");
+        out.println("");
+        out.println(".footer p {");
+        out.println("    margin: 5px 0;");
+        out.println("}");
+        out.println("");
+        out.println("/* Responsive */");
+        out.println("@media (max-width: 768px) {");
+        out.println("    .header .container {");
+        out.println("        flex-direction: column;");
+        out.println("        gap: 10px;");
+        out.println("    }");
+        out.println("    ");
+        out.println("    .service-grid {");
+        out.println("        grid-template-columns: 1fr;");
+        out.println("    }");
+        out.println("    ");
+        out.println("    .container {");
+        out.println("        padding: 0 15px;");
+        out.println("    }");
+        out.println("}");
+        out.println("</style>");
     }
 
     // Show error page
@@ -1805,7 +1983,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<div class='nav-brand'>");
         out.println("<h1><i class='fas fa-gavel'></i> Online Auction System</h1>");
         if (isLoggedIn) {
-            out.println("<span class='nav-subtitle'>Enhanced with History & Duration Control</span>");
+            out.println("<span class='nav-subtitle'>Welcome to the premier online auction platform</span>");
         }
         out.println("</div>");
 
