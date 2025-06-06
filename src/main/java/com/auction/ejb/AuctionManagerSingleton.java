@@ -5,7 +5,6 @@ import jakarta.annotation.*;
 import jakarta.ejb.Singleton;
 import jakarta.ejb.*;
 
-
 import java.time.LocalDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,13 +25,8 @@ public class AuctionManagerSingleton {
     public void initialize() {
         logger.info("Initializing Auction Manager Singleton");
 
-        // Initialize scheduler for auction management tasks
         scheduler = Executors.newScheduledThreadPool(2);
-
-        // Schedule periodic auction cleanup
         scheduleAuctionCleanup();
-
-        // Schedule auction status updates
         scheduleAuctionStatusUpdates();
 
         logger.info("Auction Manager Singleton initialized successfully");
@@ -64,25 +58,35 @@ public class AuctionManagerSingleton {
         var auctions = AuctionServiceBean.getAuctions();
         LocalDateTime now = LocalDateTime.now();
 
-        auctions.values().stream()
+        long expiredCount = auctions.values().stream()
                 .filter(auction -> auction.isActive() && auction.getEndTime().isBefore(now))
-                .forEach(this::closeExpiredAuction);
+                .peek(this::closeExpiredAuction)
+                .count();
+
+        if (expiredCount > 0) {
+            logger.info("Processed " + expiredCount + " expired auctions");
+        }
     }
 
     @Lock(LockType.WRITE)
     public void closeExpiredAuction(Auction auction) {
         logger.info("Closing expired auction: " + auction.getAuctionId());
 
-        auction.setActive(false);
+        // Use the enhanced completion method
+        auction.completeAuction("EXPIRED");
 
-        // Log auction results
-        if (auction.getCurrentHighestBidder() != null) {
-            logger.info(String.format("Auction %s won by %s with bid $%.2f",
+        // Log auction results with enhanced information
+        if (auction.hasWinner()) {
+            logger.info(String.format("Auction %s (#%d) won by %s with bid $%.2f. Total bids: %d",
                     auction.getTitle(),
-                    auction.getCurrentHighestBidder(),
-                    auction.getCurrentHighestBid()));
+                    auction.getAuctionId(),
+                    auction.getWinnerUsername(),
+                    auction.getWinningBid(),
+                    auction.getTotalBidsCount()));
         } else {
-            logger.info("Auction " + auction.getTitle() + " ended with no bids");
+            logger.info(String.format("Auction %s (#%d) ended with no bids",
+                    auction.getTitle(),
+                    auction.getAuctionId()));
         }
     }
 
@@ -98,6 +102,22 @@ public class AuctionManagerSingleton {
         return auctions.values().stream()
                 .flatMap(auction -> auction.getBids().values().stream())
                 .mapToDouble(bid -> bid.getBidAmount())
+                .sum();
+    }
+
+    // NEW METHODS for enhanced statistics
+    public int getCompletedAuctionsCount() {
+        var auctions = AuctionServiceBean.getAuctions();
+        return (int) auctions.values().stream()
+                .filter(auction -> !auction.isActive())
+                .count();
+    }
+
+    public double getCompletedAuctionsValue() {
+        var auctions = AuctionServiceBean.getAuctions();
+        return auctions.values().stream()
+                .filter(auction -> !auction.isActive())
+                .mapToDouble(Auction::getWinningBid)
                 .sum();
     }
 
@@ -123,21 +143,39 @@ public class AuctionManagerSingleton {
 
     private void cleanupOldAuctions() {
         var auctions = AuctionServiceBean.getAuctions();
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(7);
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30);
 
-        auctions.entrySet().removeIf(entry -> {
+        // Alternative approach: Count before removal
+        long removedCount = auctions.entrySet().stream()
+                .filter(entry -> {
+                    Auction auction = entry.getValue();
+                    return !auction.isActive() &&
+                            auction.getCompletedTime() != null &&
+                            auction.getCompletedTime().isBefore(cutoff);
+                })
+                .count();
+
+        // Then remove (if you need the count for logging)
+        boolean anyRemoved = auctions.entrySet().removeIf(entry -> {
             Auction auction = entry.getValue();
-            return !auction.isActive() && auction.getEndTime().isBefore(cutoff);
+            return !auction.isActive() &&
+                    auction.getCompletedTime() != null &&
+                    auction.getCompletedTime().isBefore(cutoff);
         });
+
+        if (anyRemoved && removedCount > 0) {
+            logger.info("Cleaned up " + removedCount + " old auction records");
+        }
     }
 
     private void updateAuctionStatuses() {
-        // This method can be used for real-time status updates
-        // Currently just logs system statistics
         int activeAuctions = getSystemStatus();
+        int completedAuctions = getCompletedAuctionsCount();
         double totalVolume = getTotalBidVolume();
+        double completedValue = getCompletedAuctionsValue();
 
-        logger.info(String.format("System Status - Active Auctions: %d, Total Bid Volume: $%.2f",
-                activeAuctions, totalVolume));
+        logger.info(String.format("System Status - Active: %d, Completed: %d, " +
+                        "Total Volume: $%.2f, Completed Value: $%.2f",
+                activeAuctions, completedAuctions, totalVolume, completedValue));
     }
 }

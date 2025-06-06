@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Auction implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    // Existing fields
     private Long auctionId;
     private String title;
     private String description;
@@ -18,11 +19,40 @@ public class Auction implements Serializable {
     private LocalDateTime endTime;
     private boolean active;
 
+    // NEW FIELDS for auction history management
+    private AuctionStatus status;
+    private LocalDateTime completedTime;
+    private String winnerUsername;
+    private double winningBid;
+    private int totalBidsCount;
+    private String endReason; // "EXPIRED", "MANUAL_CLOSE", "CANCELLED"
+
     // Remove non-serializable fields from main class
     private transient AtomicLong bidCounter;
     private transient ConcurrentHashMap<Long, Bid> bids;
 
+    // Status enumeration for auction lifecycle
+    public enum AuctionStatus {
+        ACTIVE("Active"),
+        ENDED("Ended"),
+        CANCELLED("Cancelled"),
+        EXPIRED("Expired");
+
+        private final String displayName;
+
+        AuctionStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
     public Auction() {
+        this.status = AuctionStatus.ACTIVE;
+        this.endReason = null;
+        this.completedTime = null;
         initializeTransientFields();
     }
 
@@ -36,23 +66,59 @@ public class Auction implements Serializable {
         this.startTime = LocalDateTime.now();
         this.endTime = endTime;
         this.active = true;
+        this.status = AuctionStatus.ACTIVE;
+        this.endReason = null;
+        this.completedTime = null;
+        this.totalBidsCount = 0;
+        this.winnerUsername = null;
+        this.winningBid = startingPrice;
         initializeTransientFields();
     }
 
     // Initialize transient fields after deserialization
     private void initializeTransientFields() {
         if (this.bidCounter == null) {
-            this.bidCounter = new AtomicLong(0);
+            this.bidCounter = new AtomicLong(this.totalBidsCount);
         }
         if (this.bids == null) {
             this.bids = new ConcurrentHashMap<>();
         }
     }
 
+    // Method to complete auction
+    public void completeAuction(String reason) {
+        this.active = false;
+        this.completedTime = LocalDateTime.now();
+        this.endReason = reason;
+        this.winnerUsername = this.currentHighestBidder;
+        this.winningBid = this.currentHighestBid;
+        this.totalBidsCount = this.bids != null ? this.bids.size() : 0;
+
+        // Set status based on reason
+        switch (reason) {
+            case "EXPIRED":
+                this.status = AuctionStatus.EXPIRED;
+                break;
+            case "CANCELLED":
+                this.status = AuctionStatus.CANCELLED;
+                break;
+            default:
+                this.status = AuctionStatus.ENDED;
+        }
+    }
+
+    // Check if auction has a winner
+    public boolean hasWinner() {
+        return winnerUsername != null && !winnerUsername.trim().isEmpty();
+    }
+
     // Custom serialization methods
     private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+        // Update totalBidsCount before serialization
+        if (this.bids != null) {
+            this.totalBidsCount = this.bids.size();
+        }
         out.defaultWriteObject();
-        // Don't serialize the concurrent collections
     }
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
@@ -60,7 +126,7 @@ public class Auction implements Serializable {
         initializeTransientFields();
     }
 
-    // Getters and Setters
+    // Existing getters and setters...
     public Long getAuctionId() { return auctionId; }
     public void setAuctionId(Long auctionId) { this.auctionId = auctionId; }
 
@@ -103,4 +169,25 @@ public class Auction implements Serializable {
         if (bidCounter == null) initializeTransientFields();
         return bidCounter.incrementAndGet();
     }
+
+    // NEW GETTERS AND SETTERS for history fields
+    public AuctionStatus getStatus() { return status; }
+    public void setStatus(AuctionStatus status) { this.status = status; }
+
+    public LocalDateTime getCompletedTime() { return completedTime; }
+    public void setCompletedTime(LocalDateTime completedTime) { this.completedTime = completedTime; }
+
+    public String getWinnerUsername() { return winnerUsername; }
+    public void setWinnerUsername(String winnerUsername) { this.winnerUsername = winnerUsername; }
+
+    public double getWinningBid() { return winningBid; }
+    public void setWinningBid(double winningBid) { this.winningBid = winningBid; }
+
+    public int getTotalBidsCount() {
+        return this.bids != null ? this.bids.size() : this.totalBidsCount;
+    }
+    public void setTotalBidsCount(int totalBidsCount) { this.totalBidsCount = totalBidsCount; }
+
+    public String getEndReason() { return endReason; }
+    public void setEndReason(String endReason) { this.endReason = endReason; }
 }
