@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 
 @Stateful
 @Remote(UserServiceRemote.class)
-@StatefulTimeout(value = 30, unit = TimeUnit.MINUTES)
+@StatefulTimeout(value = 7, unit = TimeUnit.DAYS) // Keeps bean alive for 7 days of inactivity
 public class UserServiceBean implements UserServiceRemote {
 
     private static final Logger logger = Logger.getLogger(UserServiceBean.class.getName());
