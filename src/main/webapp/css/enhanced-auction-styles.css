@@ -25,12 +25,10 @@ body {
 
 /* Navigation Bar */
 .nav-bar {
-    background: linear-gradient(135deg, #34393f 0%, #34393f 100%);
-    padding: 20px 30px;
+    background-color: #343a40;
+    padding: 15px 30px;
     color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    text-align: center;
 }
 
 .nav-bar h1 {

@@ -168,10 +168,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<div class='container'>");
 
         // Header with enhanced navigation
-//        out.println("<div class='auction-header'>");
-        out.println("<div class='header h1'>");
-        out.println("<h1> 🪉⎰Nawwa Online Auction⎱🏺</h1>");
-        out.println("<span style='color: white;'>An online auction system for selling items with bidding capabilities.</span>");
+        out.println("<div class='nav-bar'>");
+        out.println("<span style='font-size:28px;'><strong>🏺 Nawwa Online Auction</strong></span>");
+        out.println("<p>An online auction system for selling items with bidding capabilities.</p>");
         out.println("</div>");
 
         // Show messages if any
@@ -240,12 +239,12 @@ public class AuctionServlet extends HttpServlet {
         out.println("    <a href='/AuctionSystem/auction/sessions' class='nav-link'><i class='fa-solid fa-lock'></i> Sessions</a>");
 
 
-        out.println("    <a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'><i class='fa-solid fa-bell'></i> Notifications</a>");
-        out.println("  </div>");
+        out.println("    <a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'><i class='fa-solid fa-bell'></i> Live Updates</a>");
+
 
         // --- Right-side user-specific links ---
         if (isLoggedIn) {
-            out.println("  <div class='nav-actions'>");
+
             out.println("    <a href='/AuctionSystem/auction/profile' class='nav-link'><i class='fa-solid fa-user-circle'></i> Profile</a>");
             if (isAdmin) {
                 // The styled .admin-link is now grouped on the right.
