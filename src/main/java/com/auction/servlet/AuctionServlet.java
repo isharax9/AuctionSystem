@@ -153,7 +153,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<head>");
         out.println("<meta charset='UTF-8'>");
         out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        out.println("<title>Online Auction System - Enhanced Dashboard</title>");
+        out.println("<title>Online Auction System</title>");
         out.println("<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>");
 
         // Add enhanced CSS for new components
@@ -282,10 +282,15 @@ public class AuctionServlet extends HttpServlet {
             }
         }
 
-        out.println("| <a href='/AuctionSystem/auction/change-password' style='margin-right: 10px; color: #007bff;'>🔑 Change Password</a>");
+        out.println("| <a href='/AuctionSystem/auction/change-password class='btn btn-small logout-btn'>");
+        out.println("🔑 Change Password");
+        out.println("</a> |");
 
-        out.println("| <form method='post' action='/AuctionSystem/auction/logout' style='display: inline;'>");
-        out.println("<button type='submit' class='logout-btn'>🚪 Logout</button>");
+
+        // Logout button
+        out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small btn-primary'>");
+        out.println("<i class='fas fa-sign-out-alt'></i> Logout");
+        out.println("</a>");
         out.println("</form>");
         out.println("</div>");
     }
@@ -1127,18 +1132,24 @@ public class AuctionServlet extends HttpServlet {
 
         addCopyrightComment(out);
 
-        out.println("<div class='container'>");
-        out.println("<h1>📊 System Status</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+        out.println("<div class='container form-container'>");
 
-        // System Statistics (V1 comprehensive data)
+        // Main Title and Back Button
+        out.println("<div class='section-header' style='border-bottom:none;margin-bottom:0;'>");
+        out.println("<h2 style='font-size:2.2rem;display:flex;align-items:center;gap:10px;'><span style=\"font-size:2rem;\">📊</span> System Status</h2>");
+        out.println("</div>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn btn-secondary' style='margin:16px 0 12px 0;display:inline-block;'>← Back to Auctions</a>");
+        out.println("<hr style='margin:0 0 24px 0;'>");
+
+        // System Statistics
         int activeAuctions = auctionService.getActiveAuctionCount();
         int activeUsers = userService.getActiveUserCount();
         int activeSessions = sessionManager.getActiveSessionCount();
         double totalBidVolume = auctionManager.getTotalBidVolume();
 
-        out.println("<div class='status-card'>");
-        out.println("<h3>📈 System Statistics</h3>");
+        // System Statistics Card
+        out.println("<div class='auction-section' style='background:#f8f9fa;'>");
+        out.println("<h3 style='font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;font-weight:bold;'><span style=\"font-size:1.2rem;\">📉</span>&nbsp;System Statistics</h3>");
         out.println("<p><strong>Active Auctions:</strong> " + activeAuctions + "</p>");
         out.println("<p><strong>Registered Users:</strong> " + activeUsers + "</p>");
         out.println("<p><strong>Active Sessions:</strong> " + activeSessions + "</p>");
@@ -1146,8 +1157,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p><strong>Server Time:</strong> " + LocalDateTime.now().format(formatter) + " UTC</p>");
         out.println("</div>");
 
-        out.println("<div class='status-card'>");
-        out.println("<h3>🔧 EJB Components Status</h3>");
+        // EJB Components Status Card
+        out.println("<div class='auction-section' style='background:#f8f9fa;'>");
+        out.println("<h3 style='font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;font-weight:bold;'><span style=\"font-size:1.2rem;\">🛠️</span>&nbsp;EJB Components Status</h3>");
         out.println("<p>✅ AuctionService (Stateless EJB) - Active</p>");
         out.println("<p>✅ BidService (Stateless EJB) - Active</p>");
         out.println("<p>✅ UserService (Stateful EJB) - Active</p>");
@@ -1156,8 +1168,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p>✅ BidNotificationMDB (Message-Driven Bean) - Active</p>");
         out.println("</div>");
 
-        out.println("<div class='status-card'>");
-        out.println("<h3>📡 Services & Security Status</h3>");
+        // Services & Security Status Card
+        out.println("<div class='auction-section' style='background:#f8f9fa;'>");
+        out.println("<h3 style='font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;font-weight:bold;'><span style=\"font-size:1.2rem;\">🛡️</span>&nbsp;Services & Security Status</h3>");
         out.println("<p>✅ JMS Messaging - Active</p>");
         out.println("<p>✅ Session Management - Active</p>");
         out.println("<p>✅ Password Authentication - Active</p>");
@@ -1166,8 +1179,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p>✅ WebSocket Real-time Updates - Active</p>");
         out.println("</div>");
 
-        out.println("<div class='status-card'>");
-        out.println("<h3>🔐 Security Features</h3>");
+        // Security Features Card
+        out.println("<div class='auction-section' style='background:#f8f9fa;'>");
+        out.println("<h3 style='font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;font-weight:bold;'><span style=\"font-size:1.2rem;\">🔐</span>&nbsp;Security Features</h3>");
         out.println("<p>✅ SHA-256 Password Hashing</p>");
         out.println("<p>✅ Session Token Security</p>");
         out.println("<p>✅ IP Address Validation</p>");
@@ -1175,7 +1189,8 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p>✅ Automatic Session Cleanup</p>");
         out.println("</div>");
 
-        out.println("</div>");
+        out.println("</div>"); // container, form-container
+
         addFooter(out);
         out.println("</body></html>");
     }
@@ -1183,104 +1198,107 @@ public class AuctionServlet extends HttpServlet {
     // [V2 Enhanced UI Components...]
 
     /**
-     * V2 Enhanced login form
+     * V2 Enhanced login form - CSS classes and structure match enhanced theme
      */
     private void showLoginForm(PrintWriter out) {
         out.println("<div class='form-container'>");
         out.println("<h3><i class='fas fa-sign-in-alt'></i> User Login</h3>");
         out.println("<form method='post' action='/AuctionSystem/auction/login'>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='username'>Username or Email:</label>");
+        out.println("<label for='username'><i class='fas fa-user'></i> Username or Email:</label>");
         out.println("<input type='text' id='username' name='username' required placeholder='Enter username or email'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='password'>Password:</label>");
+        out.println("<label for='password'><i class='fas fa-lock'></i> Password:</label>");
         out.println("<input type='password' id='password' name='password' required placeholder='Enter password'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<input type='submit' value='Login' class='btn btn-success'>");
+        out.println("<input type='submit' value='Login' class='btn btn-success btn-create'>");
         out.println("</div>");
+
         out.println("</form>");
-        out.println("<div style='background-color: #e9ecef; padding: 15px; margin-top: 15px; border-radius: 5px;'>");
+
+        out.println("<div class='message-info' style='margin-top: 15px;'>");
         out.println("<p><small><strong>📚 Sample Users:</strong></small></p>");
-        out.println("<p><small>• john_doe, jane_smith, bob_wilson, alice_brown (Password: <code>1234</code>)</small></p>");
-        out.println("<p><small><strong>🔑 Admin Access:</strong> admin@auction.com (Password: <code>11010001</code>)</small></p>");
+        out.println("<p><small>• john_doe, jane_smith, bob_wilson, alice_brown <br>(Password: <code>1234</code>)</small></p>");
+        out.println("<p><small><strong>🔑 Admin Access:</strong> admin@auction.com <br>(Password: <code>11010001</code>)</small></p>");
         out.println("</div>");
+
         out.println("</div>");
     }
 
     /**
-     * V2 Enhanced registration form
+     * V2 Enhanced registration form - CSS classes and structure match enhanced theme
      */
     private void showRegistrationForm(PrintWriter out) {
         out.println("<div class='form-container'>");
         out.println("<h3><i class='fas fa-user-plus'></i> Create New Account</h3>");
         out.println("<form method='post' action='/AuctionSystem/auction/register'>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='reg_username'>Username:</label>");
+        out.println("<label for='reg_username'><i class='fas fa-user'></i> Username:</label>");
         out.println("<input type='text' id='reg_username' name='regUsername' required placeholder='Choose a unique username'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='reg_email'>Email:</label>");
+        out.println("<label for='reg_email'><i class='fas fa-envelope'></i> Email:</label>");
         out.println("<input type='email' id='reg_email' name='regEmail' required placeholder='Enter your email address'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='reg_password'>Password:</label>");
+        out.println("<label for='reg_password'><i class='fas fa-lock'></i> Password:</label>");
         out.println("<input type='password' id='reg_password' name='regPassword' required minlength='4' placeholder='Minimum 4 characters'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='reg_confirm_password'>Confirm Password:</label>");
+        out.println("<label for='reg_confirm_password'><i class='fas fa-lock'></i> Confirm Password:</label>");
         out.println("<input type='password' id='reg_confirm_password' name='regConfirmPassword' required minlength='4' placeholder='Confirm your password'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<input type='submit' value='Register' class='btn btn-success'>");
+        out.println("<input type='submit' value='Register' class='btn btn-secondary btn-create'>");
         out.println("</div>");
+
         out.println("</form>");
         out.println("</div>");
     }
 
     /**
-     * V2 Enhanced user info with statistics
+     * V2 Enhanced user info with statistics using enhanced CSS classes.
      */
     private void showUserInfo(PrintWriter out, String username, boolean isAdmin) {
-        out.println("<div class='user-info-container'>");
-        out.println("<div class='user-welcome'>");
-        out.println("<h3><i class='fas fa-user-circle'></i> Welcome, " + escapeHtml(username) + "!</h3>");
+        out.println("<div class='form-container user-info' style='margin-bottom: 24px;'>");
 
+        // User Welcome Section
+        out.println("<div style='display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 12px;'>");
+        out.println("<h3 style='display:flex;align-items:center;gap:10px;margin:0;'>");
+        out.println("<i class='fas fa-user-circle'></i> Welcome, " + escapeHtml(username) + "!");
+        out.println("</h3>");
         if (isAdmin) {
-            out.println("<div class='admin-badge'>");
-            out.println("<i class='fas fa-crown'></i> Administrator");
-            out.println("</div>");
+            out.println("<span class='admin-badge'><i class='fas fa-crown'></i> Administrator</span>");
         }
-
         out.println("</div>");
 
-        // User actions
-        out.println("<div class='user-actions'>");
-        out.println("<div class='action-buttons'>");
+        // User Actions (buttons)
+        out.println("<div style='margin-bottom: 18px;'>");
+        out.println("<div style='display:flex;gap:10px;flex-wrap:wrap;'>");
 
-        // View won auctions
-        out.println("<a href='/AuctionSystem/auction/?view=my_wins' class='btn btn-small'>");
+        out.println("<a href='/AuctionSystem/auction/?view=my_wins' class='btn btn-small btn-success' style='text-decoration:none;'>");
         out.println("<i class='fas fa-trophy'></i> My Wins");
         out.println("</a>");
 
-        // Live notifications
-        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='btn btn-small'>");
+        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='btn btn-small btn-secondary' style='text-decoration:none;'>");
         out.println("<i class='fas fa-bell'></i> Live Updates");
         out.println("</a>");
 
-        // Admin panel (if admin)
         if (isAdmin) {
-            out.println("<a href='/AuctionSystem/auction/admin/sessions' class='btn btn-small btn-admin'>");
+            out.println("<a href='/AuctionSystem/auction/admin/sessions' class='btn btn-small' style='background:linear-gradient(135deg,#e74c3c 0%,#c0392b 100%);color:white;'>");
             out.println("<i class='fas fa-cogs'></i> Admin Panel");
             out.println("</a>");
         }
-
-        // Logout button
-        out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small logout-btn'>");
-        out.println("<i class='fas fa-sign-out-alt'></i> Logout");
-        out.println("</a>");
-
         out.println("</div>");
         out.println("</div>");
 
@@ -1327,10 +1345,11 @@ public class AuctionServlet extends HttpServlet {
 
     /**
      * V2 Enhanced system statistics with completed auctions
+     * (Modern UI, system statistics in grid cards; matches your enhanced CSS)
      */
     private void showSystemStatistics(PrintWriter out, int activeCount, int completedCount) {
         out.println("<div class='stats-container'>");
-        out.println("<h3><i class='fas fa-chart-line'></i> System Statistics</h3>");
+        out.println("<h3 style='margin-bottom:18px;display:flex;align-items:center;gap:10px;'><i class='fas fa-chart-line'></i> System Statistics</h3>");
 
         out.println("<div class='stats-grid'>");
 
