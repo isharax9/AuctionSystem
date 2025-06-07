@@ -15,6 +15,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nawwa Auction Solution</title>
+
+    <!-- ===== FAVICON IMPLEMENTATION ===== -->
+    <!-- Standard favicon -->
+    <link rel="icon" type="image/x-icon" href="${pageContext.request.contextPath}/favicon.ico">
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -770,7 +775,7 @@
             <a href="#features" class="nav-link">Features</a>
             <a href="#architecture" class="nav-link">Architecture</a>
             <a href="#technology" class="nav-link">Technology</a>
-            <a href="/AuctionSystem/auction/status" class="nav-link">System Status</a>
+            <a href="https://isharax9.me/" class="nav-link">Developer Portfolio</a>
         </div>
         <a href="/AuctionSystem/auction/" class="nav-cta">
             <i class="fas fa-rocket"></i> Launch System
@@ -787,7 +792,7 @@
                 Enterprise-Grade Platform
             </div>
             <h1 class="hero-title">
-                Enhanced Online<br>
+                Customized Online<br>
                 Auction System
             </h1>
             <p class="hero-subtitle">
