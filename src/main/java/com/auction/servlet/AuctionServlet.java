@@ -153,7 +153,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<head>");
         out.println("<meta charset='UTF-8'>");
         out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
-        out.println("<title>Online Auction System - Enhanced Dashboard</title>");
+        out.println("<title>Online Auction System</title>");
         out.println("<link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' rel='stylesheet'>");
 
         // Add enhanced CSS for new components
@@ -168,9 +168,10 @@ public class AuctionServlet extends HttpServlet {
         out.println("<div class='container'>");
 
         // Header with enhanced navigation
-        out.println("<div class='header'>");
-        out.println("<h1>🏺 Online Auction System</h1>");
-        out.println("<p>Enhanced with History & Duration Control - Premium Auction Platform</p>");
+//        out.println("<div class='auction-header'>");
+        out.println("<div class='header h1'>");
+        out.println("<h1> 🪉⎰Nawwa Online Auction⎱🏺</h1>");
+        out.println("<span style='color: white;'>An online auction system for selling items with bidding capabilities.</span>");
         out.println("</div>");
 
         // Show messages if any
@@ -226,20 +227,34 @@ public class AuctionServlet extends HttpServlet {
      * Enhanced navigation combining V1 comprehensive features with V2 styling
      */
     private void showEnhancedNavigation(PrintWriter out, String currentUser, boolean isLoggedIn, boolean isAdmin) {
-        out.println("<div class='nav-bar'>");
-        out.println("<a href='/AuctionSystem/auction/' class='nav-link'>🏠 Home</a>");
-        out.println("<a href='/AuctionSystem/auction/users' class='nav-link'>👥 Users</a>");
-        out.println("<a href='/AuctionSystem/auction/status' class='nav-link'>📊 System Status</a>");
-        out.println("<a href='/AuctionSystem/auction/sessions' class='nav-link'>🔐 Sessions</a>");
-        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'>🔔 Notifications</a>");
+        // The .nav-bar class is a flex container with "justify-content: space-between".
+        // We create two inner divs to group links to the left and right for proper alignment.
+        out.println("<nav class='nav-bar'>");
 
-        if (currentUser != null) {
-            out.println("<a href='/AuctionSystem/auction/profile' class='nav-link'>👤 Profile</a>");
+        // --- Left-side navigation links ---
+        out.println("  <div class='nav-actions'>");
+        // Replaced emoji with a Font Awesome icon for consistent styling.
+        out.println("    <a href='/AuctionSystem/auction/' class='nav-link'><i class='fa-solid fa-house'></i> Home</a>");
+        out.println("    <a href='/AuctionSystem/auction/users' class='nav-link'><i class='fa-solid fa-users'></i> Users</a>");
+        out.println("    <a href='/AuctionSystem/auction/status' class='nav-link'><i class='fa-solid fa-chart-line'></i> System Status</a>");
+        out.println("    <a href='/AuctionSystem/auction/sessions' class='nav-link'><i class='fa-solid fa-lock'></i> Sessions</a>");
+
+
+        out.println("    <a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'><i class='fa-solid fa-bell'></i> Notifications</a>");
+        out.println("  </div>");
+
+        // --- Right-side user-specific links ---
+        if (isLoggedIn) {
+            out.println("  <div class='nav-actions'>");
+            out.println("    <a href='/AuctionSystem/auction/profile' class='nav-link'><i class='fa-solid fa-user-circle'></i> Profile</a>");
             if (isAdmin) {
-                out.println("<a href='/AuctionSystem/auction/admin/sessions/' class='nav-link admin-link'>🔧 Admin Panel</a>");
+                // The styled .admin-link is now grouped on the right.
+                out.println("    <a href='/AuctionSystem/auction/admin/sessions/' class='nav-link admin-link'><i class='fa-solid fa-screwdriver-wrench'></i> Admin Panel</a>");
             }
+            out.println("  </div>");
         }
-        out.println("</div>");
+
+        out.println("</nav>");
     }
 
     /**
@@ -250,12 +265,15 @@ public class AuctionServlet extends HttpServlet {
         int activeSessions = sessionManager.getActiveSessionCount();
         double totalBidVolume = auctionManager.getTotalBidVolume();
 
-        out.println("<div class='status'>");
-        out.println("<strong>📈 System Status:</strong> ");
-        out.println(activeCount + " active auctions • " + completedCount + " completed • " +
-                activeUsers + " users • " + activeSessions + " sessions • ");
-        out.println("$" + String.format("%.2f", totalBidVolume) + " total volume");
-        out.println("<br><small>Last updated: " + LocalDateTime.now().format(formatter) + " UTC</small>");
+        out.println("<div style='background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 15px 0; border-radius: 4px; font-size: 14px; color: #495057;'>");
+        out.println("<div style='display: flex; align-items: center; margin-bottom: 5px;'>");
+        out.println("<span style='margin-right: 8px; font-size: 16px;'>📈</span>");
+        out.println("<strong style='color: #333;'>System Status:</strong>");
+        out.println("<span style='margin-left: 8px;'>" + activeCount + " active auctions • " + completedCount + " completed • " + activeUsers + " users • " + activeSessions + " sessions • $" + String.format("%.2f", totalBidVolume) + " total volume</span>");
+        out.println("</div>");
+        out.println("<div style='font-size: 12px; color: #6c757d; margin-top: 5px;'>");
+        out.println("Last updated: " + LocalDateTime.now().format(formatter) + " UTC");
+        out.println("</div>");
         out.println("</div>");
     }
 
@@ -266,12 +284,15 @@ public class AuctionServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         String sessionToken = session != null ? (String) session.getAttribute("sessionToken") : null;
 
-        out.println("<div class='user-info'>");
-        out.println("<strong>👤 Welcome, " + escapeHtml(username) + "!</strong> ");
+        // FIX: Replaced 'user-info' with 'message message-success' for the styled green bar.
+        out.println("<div class='message message-success'>");
 
-        // Show admin badge if user is admin
+        // FIX: Replaced emoji with a Font Awesome icon for consistency.
+        out.println("<strong><i class='fa-solid fa-user'></i> Welcome, " + escapeHtml(username) + "!</strong> ");
+
+        // FIX: Replaced 'admin-badge' with the standard 'badge' class.
         if (userService.isUserAdmin(username)) {
-            out.println("<span class='admin-badge'>🔑 ADMIN</span> ");
+            out.println("<span class='badge' style='background-color: #e74c3c;'>ADMIN</span> ");
         }
 
         if (sessionToken != null) {
@@ -282,11 +303,17 @@ public class AuctionServlet extends HttpServlet {
             }
         }
 
-        out.println("| <a href='/AuctionSystem/auction/change-password' style='margin-right: 10px; color: #007bff;'>🔑 Change Password</a>");
+        // FIX: Corrected the broken HTML href and CSS classes. Replaced emoji with icon.
+        out.println("| <a href='/AuctionSystem/auction/change-password' class='btn btn-small btn-secondary'>");
+        out.println("<i class='fa-solid fa-key'></i> Change Password");
+        out.println("</a> |");
 
-        out.println("| <form method='post' action='/AuctionSystem/auction/logout' style='display: inline;'>");
-        out.println("<button type='submit' class='logout-btn'>🚪 Logout</button>");
-        out.println("</form>");
+        // FIX: Used a valid button style. An inline style is used for the red color.
+        out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small' style='background-color: #c0392b; color: white;'>");
+        out.println("<i class='fas fa-sign-out-alt'></i> Logout");
+        out.println("</a>");
+
+        // FIX: Removed the stray, unopened </form> tag.
         out.println("</div>");
     }
 
@@ -336,9 +363,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<div class='time-input-group'>");
         out.println("<label for='durationMinutes'>Minutes:</label>");
         out.println("<select id='durationMinutes' name='durationMinutes' required>");
-        int[] minutes = {0, 15, 30, 45};
-        for (int min : minutes) {
-            out.println("<option value='" + min + "'>" + min + "</option>");
+        for (int min = 0; min <= 60; min++) { // 0 to 60 min (1 hour)
+            String selected = (min == 1) ? " selected" : "";
+            out.println("<option value='" + min + "'" + selected + ">" + min + "</option>");
         }
         out.println("</select>");
         out.println("</div>");
@@ -556,7 +583,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<div class='container'>");
 
         out.println("<h1>🏺 " + escapeHtml(auction.getTitle()) + "</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn btn-secondary'>← Back to Auctions</a><hr>");
 
         // Show user info if logged in (V1 feature)
         if (currentUser != null) {
@@ -892,9 +919,6 @@ public class AuctionServlet extends HttpServlet {
 
     // [Additional V1 methods continue here...]
 
-    /**
-     * V1 Show change password form
-     */
     private void showChangePasswordForm(HttpServletRequest request, PrintWriter out) {
         String currentUser = getCurrentUser(request);
         if (currentUser == null) {
@@ -904,16 +928,16 @@ public class AuctionServlet extends HttpServlet {
 
         out.println("<html><head><title>Change Password</title>");
         out.println("<meta charset='UTF-8'>");
-        addEnhancedCSS(out);
-        out.println("</head><body>");
+        out.println("</head><body style=\"margin:0;background:#f5f6fa;font-family:'Segoe UI',Arial,sans-serif;\">");
 
-        out.println("<div class='container'>");
-        out.println("<h1>🔑 Change Password</h1>");
-        out.println("<a href='/AuctionSystem/auction/'>← Back to Main Page</a><hr>");
+        out.println("<div style=\"max-width:400px;margin:50px auto;padding:32px 28px 26px 28px;background:#fff;border-radius:12px;box-shadow:0 2px 12px #0001;\">");
+        out.println("<h1 style=\"font-size:1.7em;margin-bottom:10px;\">🔑 Change Password</h1>");
+        out.println("<a href='/AuctionSystem/auction/' style=\"display:inline-block;margin-bottom:18px;padding:7px 16px;background:#f3f3fb;color:#333;text-decoration:none;border-radius:6px;font-weight:500;transition:background 0.2s;\">← Back to Main Page</a>");
+        out.println("<hr style=\"margin:18px 0 26px 0;border:none;border-top:1px solid #e0e0e0;\">");
 
         String error = request.getParameter("error");
         if (error != null) {
-            out.println("<div class='error-msg'>");
+            out.println("<div style=\"background:#ffe6e6;color:#c00;border:1px solid #ffb4b4;border-radius:6px;padding:12px 14px;margin-bottom:18px;font-size:1em;\">");
             switch (error) {
                 case "wrong_password":
                     out.println("❌ Current password is incorrect.");
@@ -935,78 +959,111 @@ public class AuctionServlet extends HttpServlet {
         }
 
         out.println("<form method='post' action='/AuctionSystem/auction/change-password'>");
-        out.println("<div class='form-group'>");
-        out.println("<label for='current_password'>Current Password:</label>");
-        out.println("<input type='password' id='current_password' name='currentPassword' required>");
-        out.println("</div>");
-        out.println("<div class='form-group'>");
-        out.println("<label for='new_password'>New Password:</label>");
-        out.println("<input type='password' id='new_password' name='newPassword' required minlength='4'>");
-        out.println("</div>");
-        out.println("<div class='form-group'>");
-        out.println("<label for='confirm_password'>Confirm New Password:</label>");
-        out.println("<input type='password' id='confirm_password' name='confirmPassword' required minlength='4'>");
-        out.println("</div>");
-        out.println("<div class='form-group'>");
-        out.println("<input type='submit' value='Change Password' class='btn'>");
-        out.println("</div>");
-        out.println("</form>");
 
+        out.println("<div style=\"margin-bottom:16px;\">");
+        out.println("<label for='current_password' style=\"display:block;font-weight:500;margin-bottom:5px;\">Current Password:</label>");
+        out.println("<input type='password' id='current_password' name='currentPassword' required style=\"width:100%;padding:9px 10px;border:1.5px solid #ccd7e8;border-radius:6px;font-size:1em;\">");
+        out.println("</div>");
+
+        out.println("<div style=\"margin-bottom:16px;\">");
+        out.println("<label for='new_password' style=\"display:block;font-weight:500;margin-bottom:5px;\">New Password:</label>");
+        out.println("<input type='password' id='new_password' name='newPassword' required minlength='4' style=\"width:100%;padding:9px 10px;border:1.5px solid #ccd7e8;border-radius:6px;font-size:1em;\">");
+        out.println("</div>");
+
+        out.println("<div style=\"margin-bottom:18px;\">");
+        out.println("<label for='confirm_password' style=\"display:block;font-weight:500;margin-bottom:5px;\">Confirm New Password:</label>");
+        out.println("<input type='password' id='confirm_password' name='confirmPassword' required minlength='4' style=\"width:100%;padding:9px 10px;border:1.5px solid #ccd7e8;border-radius:6px;font-size:1em;\">");
+        out.println("</div>");
+
+        out.println("<div>");
+        out.println("<input type='submit' value='Change Password' style=\"width:100%;background:#1eb980;color:#fff;font-size:1.07em;font-weight:600;padding:12px 0;border:none;border-radius:7px;cursor:pointer;box-shadow:0 1px 4px #0002;transition:background 0.2s;\">");
+        out.println("</div>");
+
+        out.println("</form>");
         out.println("</div>");
         out.println("</body></html>");
     }
-
-    /**
-     * V1 Show session status
-     */
+    //    Session status
     private void showSessionStatus(HttpServletRequest request, PrintWriter out) {
-        out.println("<html><head><title>Session Status</title>");
-        out.println("<meta charset='UTF-8'>");
-        addEnhancedCSS(out);
-        out.println("</head><body>");
+        // --- CSS Style Definitions (for inline styles on cards) ---
+        String bodyStyle = "style='margin:0; background:#f5f6fa; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;'";
+        String mainCardStyle = "style='max-width: 600px; margin: 40px auto; padding: 32px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);'";
+        String h1Style = "style='font-size: 1.8em; margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;'";
+        String infoCardHeaderStyle = "style='margin-top: 0; font-size: 1.2em; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e9ecef; padding-bottom: 12px; margin-bottom: 16px;'";
+        String infoCardBaseStyle = "border-radius: 10px; padding: 24px; margin-bottom: 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);";
+        String statsCardStyle = "style='" + infoCardBaseStyle + " background: #f8faff; border: 1px solid #dbe6fb;'";
+        String userCardStyle = "style='" + infoCardBaseStyle + " background: #f7fff9; border: 1px solid #d4f3dd;'";
+        String guestCardStyle = "style='" + infoCardBaseStyle + " background: #fffaf2; border: 1px solid #ffe2ba;'";
+        String rowStyle = "style='display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e9ecef;'";
+        String lastRowStyle = "style='display: flex; justify-content: space-between; align-items: center; padding: 10px 0;'";
+        String labelStyle = "style='font-weight: 600; color: #333;'";
+        String valueStyle = "style='color: #555;'";
 
-        out.println("<div class='container'>");
-        out.println("<h1>🔐 Session Status</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
 
-        // Session Statistics
+        // --- HTML Output ---
+        out.println("<!DOCTYPE html>");
+        out.println("<html lang='en'>");
+        out.println("<head>");
+        out.println("  <title>Session Status</title>");
+        out.println("  <meta charset='UTF-8'>");
+
+        // --- ADD THIS STYLE BLOCK ---
+        // This defines the styles for your 'btn-success' class and the 'hr' tag.
+        out.println("  <style>");
+        out.println("    .btn { display: inline-block; font-weight: 500; text-align: center; cursor: pointer; user-select: none; background-color: transparent; border: 1px solid transparent; padding: 8px 16px; font-size: 1rem; border-radius: 8px; text-decoration: none; transition: all .15s ease-in-out; }");
+        out.println("    .btn-success { color: #fff; background-color: #28a745; border-color: #28a745; }");
+        out.println("    .btn-success:hover { color: #fff; background-color: #218838; border-color: #1e7e34; }");
+        out.println("    hr { margin: 24px 0; border: 0; border-top: 1px solid #e9ecef; }");
+        out.println("  </style>");
+        // --- END STYLE BLOCK ---
+
+        out.println("</head>");
+        out.println("<body " + bodyStyle + ">");
+
+        out.println("<div " + mainCardStyle + ">");
+        out.println("<h1 " + h1Style + "><span>🔐</span> Session Status</h1>");
+        // This class will now be styled correctly by the <style> block above
+        out.println("<a href='/AuctionSystem/auction/' class='btn btn-success'>← Back to Auctions</a>");
+        out.println("<hr>");
+
+        // Session Statistics Card
         int activeSessionCount = sessionManager.getActiveSessionCount();
-        out.println("<div class='status-card'>");
-        out.println("<h3>📊 Session Statistics</h3>");
-        out.println("<p><strong>Total Active Sessions:</strong> " + activeSessionCount + "</p>");
-        out.println("<p><strong>Server Time:</strong> " + LocalDateTime.now().format(formatter) + " UTC</p>");
+        out.println("<div " + statsCardStyle + ">");
+        out.println("<h3 " + infoCardHeaderStyle + "><span>📊</span>Session Statistics</h3>");
+        out.println("<div " + rowStyle + "><span " + labelStyle + ">Total Active Sessions:</span><span " + valueStyle + ">" + activeSessionCount + "</span></div>");
+        out.println("<div " + lastRowStyle + "><span " + labelStyle + ">Server Time:</span><span " + valueStyle + ">" + LocalDateTime.now().format(formatter) + " UTC</span></div>");
         out.println("</div>");
 
-        // Current user session info
+        // Current User Session Info Card (Conditional)
         String currentUser = getCurrentUser(request);
         if (currentUser != null) {
             HttpSession session = request.getSession(false);
-            String sessionToken = session != null ? (String) session.getAttribute("sessionToken") : null;
+            String sessionToken = (session != null) ? (String) session.getAttribute("sessionToken") : null;
 
             if (sessionToken != null) {
                 ActiveSessionInfo sessionInfo = sessionManager.getSessionInfo(sessionToken);
                 if (sessionInfo != null) {
-                    out.println("<div class='status-card'>");
-                    out.println("<h3>👤 Your Session Info</h3>");
-                    out.println("<p><strong>Username:</strong> " + sessionInfo.getUsername() + "</p>");
-                    out.println("<p><strong>Login Time:</strong> " + sessionInfo.getLoginTime().format(formatter) + " UTC</p>");
-                    out.println("<p><strong>Session Duration:</strong> " + sessionInfo.getSessionDurationMinutes() + " minutes</p>");
-                    out.println("<p><strong>Last Activity:</strong> " + sessionInfo.getInactiveDurationMinutes() + " minutes ago</p>");
-                    out.println("<p><strong>IP Address:</strong> " + sessionInfo.getIpAddress() + "</p>");
+                    out.println("<div " + userCardStyle + ">");
+                    out.println("<h3 " + infoCardHeaderStyle + "><span>👤</span>Your Session Info</h3>");
+                    out.println("<div " + rowStyle + "><span " + labelStyle + ">Username:</span><span " + valueStyle + ">" + sessionInfo.getUsername() + "</span></div>");
+                    out.println("<div " + rowStyle + "><span " + labelStyle + ">Login Time:</span><span " + sessionInfo.getLoginTime().format(formatter) + " UTC</span></div>");
+                    out.println("<div " + rowStyle + "><span " + labelStyle + ">Session Duration:</span><span " + valueStyle + ">" + sessionInfo.getSessionDurationMinutes() + " minutes</span></div>");
+                    out.println("<div " + rowStyle + "><span " + labelStyle + ">Last Activity:</span><span " + valueStyle + ">" + sessionInfo.getInactiveDurationMinutes() + " minutes ago</span></div>");
+                    out.println("<div " + lastRowStyle + "><span " + labelStyle + ">IP Address:</span><span " + valueStyle + ">" + sessionInfo.getIpAddress() + "</span></div>");
                     out.println("</div>");
                 }
             }
         } else {
-            out.println("<div class='status-card'>");
-            out.println("<h3>👤 Session Info</h3>");
+            out.println("<div " + guestCardStyle + ">");
+            out.println("<h3 " + infoCardHeaderStyle + "><span>👤</span>Your Session Info</h3>");
             out.println("<p>You are not currently logged in.</p>");
             out.println("</div>");
         }
 
         out.println("</div>");
+        addFooter(out);
         out.println("</body></html>");
     }
-
     /**
      * V1 Show user profile
      */
@@ -1019,86 +1076,190 @@ public class AuctionServlet extends HttpServlet {
 
         out.println("<html><head><title>User Profile</title>");
         out.println("<meta charset='UTF-8'>");
-        addEnhancedCSS(out);
-        out.println("</head><body>");
+        out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        out.println("</head><body style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #212529; line-height: 1.6;'>");
 
-        out.println("<div class='container'>");
-        out.println("<h1>👤 User Profile</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+        // Container
+        out.println("<div style='max-width: 1200px; margin: 0 auto; padding: 20px;'>");
+
+        // Header
+        out.println("<h1 style='color: #343a40; margin-bottom: 20px; font-size: 2rem; font-weight: 600; display: flex; align-items: center; gap: 10px;'>");
+        out.println("<span>👤</span> User Profile</h1>");
+
+        // Back button
+        out.println("<a href='/AuctionSystem/auction/' style='display: inline-block; padding: 8px 16px; background-color: #6c757d; color: 4F565DFF; text-decoration: none; border-radius: 4px; font-size: 14px; margin-bottom: 20px; transition: background-color 0.3s ease;' onmouseover='this.style.backgroundColor=\"#5a6268\";' onmouseout='this.style.backgroundColor=\"#6c757d\";'>← Back to Auctions</a>");
+
+        out.println("<hr style='border: none; border-top: 1px solid #dee2e6; margin: 20px 0;'>");
 
         User user = userService.getUserByUsername(currentUser);
         if (user != null) {
-            out.println("<div class='profile-card'>");
-            out.println("<h3>Profile Information</h3>");
-            out.println("<p><strong>Username:</strong> " + user.getUsername());
+            // Profile Information Card
+            out.println("<div style='background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #007bff;'>");
+            out.println("<h3 style='color: #495057; margin-top: 0; margin-bottom: 20px; font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 8px;'>");
+            out.println("<span>ℹ️</span> Profile Information</h3>");
+
+            // Username
+            out.println("<p style='margin: 12px 0; font-size: 15px;'>");
+            out.println("<strong style='color: #495057; display: inline-block; width: 140px;'>Username:</strong> ");
+            out.println("<span style='color: #212529;'>" + user.getUsername() + "</span>");
             if (user.isAdmin()) {
-                out.println(" <span class='admin-badge'>🔑 ADMIN</span>");
+                out.println(" <span style='background: linear-gradient(135deg, #ffd700, #ffed4a); color: #8b4513; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-left: 8px;'>🔑 ADMIN</span>");
             }
             out.println("</p>");
-            out.println("<p><strong>Email:</strong> " + user.getEmail() + "</p>");
-            out.println("<p><strong>Last Activity:</strong> " + user.getLastActivity().format(formatter) + " UTC</p>");
-            out.println("<p><strong>Account Status:</strong> " + (user.isActive() ? "🟢 Active" : "🔴 Inactive") + "</p>");
-            out.println("<p><a href='/AuctionSystem/auction/change-password' class='btn'>🔑 Change Password</a></p>");
+
+            // Email
+            out.println("<p style='margin: 12px 0; font-size: 15px;'>");
+            out.println("<strong style='color: #495057; display: inline-block; width: 140px;'>Email:</strong> ");
+            out.println("<span style='color: #212529;'>" + user.getEmail() + "</span>");
+            out.println("</p>");
+
+            // Last Activity
+            out.println("<p style='margin: 12px 0; font-size: 15px;'>");
+            out.println("<strong style='color: #495057; display: inline-block; width: 140px;'>Last Activity:</strong> ");
+            out.println("<span style='color: #6c757d;'>" + user.getLastActivity().format(formatter) + " UTC</span>");
+            out.println("</p>");
+
+            // Account Status
+            out.println("<p style='margin: 12px 0; font-size: 15px;'>");
+            out.println("<strong style='color: #495057; display: inline-block; width: 140px;'>Account Status:</strong> ");
+            if (user.isActive()) {
+                out.println("<span style='color: #28a745; font-weight: 600;'>🟢 Active</span>");
+            } else {
+                out.println("<span style='color: #dc3545; font-weight: 600;'>🔴 Inactive</span>");
+            }
+            out.println("</p>");
+
+            // Change Password Button
+            out.println("<p style='margin-top: 20px; padding-top: 16px; border-top: 1px solid #e9ecef;'>");
+            out.println("<a href='/AuctionSystem/auction/change-password' style='display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500; transition: background-color 0.3s ease;' onmouseover='this.style.backgroundColor=\"#0056b3\";' onmouseout='this.style.backgroundColor=\"#007bff\";'>🔑 Change Password</a>");
+            out.println("</p>");
             out.println("</div>");
 
-            // Show user's active sessions
+            // Active Sessions Card
             List<ActiveSessionInfo> userSessions = sessionManager.getActiveSessionsForUser(currentUser);
-            out.println("<div class='profile-card'>");
-            out.println("<h3>Your Active Sessions (" + userSessions.size() + ")</h3>");
+            out.println("<div style='background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #28a745;'>");
+            out.println("<h3 style='color: #495057; margin-top: 0; margin-bottom: 20px; font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 8px;'>");
+            out.println("<span>🔐</span> Your Active Sessions (" + userSessions.size() + ")</h3>");
 
             if (userSessions.isEmpty()) {
-                out.println("<p>No other active sessions found.</p>");
+                out.println("<p style='color: #6c757d; font-style: italic; margin: 0;'>No other active sessions found.</p>");
             } else {
-                out.println("<table>");
-                out.println("<tr><th>Login Time</th><th>Duration</th><th>IP Address</th><th>Last Activity</th></tr>");
+                // Sessions Table
+                out.println("<div style='overflow-x: auto;'>");
+                out.println("<table style='width: 100%; border-collapse: collapse; margin-top: 10px;'>");
+                out.println("<thead>");
+                out.println("<tr style='background-color: #f8f9fa;'>");
+                out.println("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057;'>Login Time</th>");
+                out.println("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057;'>Duration</th>");
+                out.println("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057;'>IP Address</th>");
+                out.println("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057;'>Last Activity</th>");
+                out.println("</tr>");
+                out.println("</thead>");
+                out.println("<tbody>");
 
                 for (ActiveSessionInfo sessionInfo : userSessions) {
-                    out.println("<tr>");
-                    out.println("<td>" + sessionInfo.getLoginTime().format(formatter) + "</td>");
-                    out.println("<td>" + sessionInfo.getSessionDurationMinutes() + " min</td>");
-                    out.println("<td>" + sessionInfo.getIpAddress() + "</td>");
-                    out.println("<td>" + sessionInfo.getInactiveDurationMinutes() + " min ago</td>");
+                    out.println("<tr style='transition: background-color 0.2s ease;' onmouseover='this.style.backgroundColor=\"#f8f9fa\";' onmouseout='this.style.backgroundColor=\"transparent\";'>");
+                    out.println("<td style='padding: 12px; border-bottom: 1px solid #e9ecef; color: #212529;'>" + sessionInfo.getLoginTime().format(formatter) + "</td>");
+                    out.println("<td style='padding: 12px; border-bottom: 1px solid #e9ecef; color: #212529;'>");
+                    out.println("<span style='background-color: #e7f3ff; color: #0056b3; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: 500;'>" + sessionInfo.getSessionDurationMinutes() + " min</span>");
+                    out.println("</td>");
+                    out.println("<td style='padding: 12px; border-bottom: 1px solid #e9ecef; color: #212529; font-family: monospace;'>" + sessionInfo.getIpAddress() + "</td>");
+                    out.println("<td style='padding: 12px; border-bottom: 1px solid #e9ecef; color: #6c757d;'>" + sessionInfo.getInactiveDurationMinutes() + " min ago</td>");
                     out.println("</tr>");
                 }
 
+                out.println("</tbody>");
                 out.println("</table>");
+                out.println("</div>");
             }
             out.println("</div>");
         }
 
-        out.println("</div>");
+        out.println("</div>"); // End container
+
+        // Add responsive CSS
+        out.println("<style>");
+        out.println("@media (max-width: 768px) {");
+        out.println("  body { padding: 10px !important; }");
+        out.println("  h1 { font-size: 1.5rem !important; }");
+        out.println("  .profile-card { padding: 16px !important; }");
+        out.println("  table { font-size: 14px !important; }");
+        out.println("  th, td { padding: 8px !important; }");
+        out.println("}");
+        out.println("</style>");
+
+        addFooter(out);
+
         out.println("</body></html>");
     }
 
     /**
-     * V1 Show user list
+     * V2 Show user list with INLINE CSS
      */
     private void showUserList(PrintWriter out) {
+        // --- Define all CSS styles as strings for cleaner code ---
+
+        String containerStyle = "style='max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #fdfdfd; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); font-family: sans-serif;'";
+        String h1Style = "style='color: #333; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;'";
+        String btnStyle = "style='display: inline-block; background-color: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: 600;'";
+        String tableStyle = "style='width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.95em;'";
+        String thStyle = "style='background-color: #f8f9fa; color: #333; font-weight: 600; text-align: left; padding: 15px; border-bottom: 2px solid #dee2e6;'";
+        String tdStyle = "style='padding: 15px; border-bottom: 1px solid #e9ecef; color: #555;'";
+        String adminBadgeStyle = "style='background-color: #ffc107; color: #333; padding: 4px 8px; border-radius: 5px; font-size: 0.8em; font-weight: 700; white-space: nowrap;'";
+
+        // Style for table rows (default)
+        String trStyle = "style='background-color: #ffffff;'";
+        // Style for alternating table rows (for zebra-striping)
+        String trEvenStyle = "style='background-color: #f8f9fa;'";
+
+
+        // --- Start HTML Output ---
+
         out.println("<html><head><title>Active Users</title>");
         out.println("<meta charset='UTF-8'>");
-        addEnhancedCSS(out);
+
+        // A small style block is required for hover effects, which cannot be inlined.
+        out.println("<style>");
+        out.println("  tr.user-row:hover { background-color: #e9ecef !important; cursor: pointer; }");
+        out.println("  a.btn-back:hover { background-color: #0056b3 !important; }");
+        out.println("</style>");
+
         out.println("</head><body>");
 
-        out.println("<div class='container'>");
-        out.println("<h1>👥 Active Users</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+        out.println("<div " + containerStyle + ">");
+        out.println("<h1 " + h1Style + ">👥 Active Users</h1>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn-back' " + btnStyle + ">← Back to Auctions</a><hr style='border: none; border-top: 1px solid #eee; margin-top: 20px;'>");
 
         List<User> users = userService.getAllActiveUsers();
 
         if (users.isEmpty()) {
             out.println("<p>No active users found.</p>");
         } else {
-            out.println("<table>");
-            out.println("<tr><th>Username</th><th>Email</th><th>Role</th><th>Last Activity</th><th>Sessions</th></tr>");
+            out.println("<table " + tableStyle + ">");
 
-            for (User user : users) {
+            // Table Header
+            out.println("<tr>");
+            out.println("<th " + thStyle + ">Username</th>");
+            out.println("<th " + thStyle + ">Email</th>");
+            out.println("<th " + thStyle + ">Role</th>");
+            out.println("<th " + thStyle + ">Last Activity</th>");
+            out.println("<th " + thStyle + ">Sessions</th>");
+            out.println("</tr>");
+
+            // Table Body
+            for (int i = 0; i < users.size(); i++) {
+                User user = users.get(i);
                 int userSessionCount = sessionManager.getActiveSessionsForUser(user.getUsername()).size();
-                out.println("<tr>");
-                out.println("<td><strong>" + user.getUsername() + "</strong></td>");
-                out.println("<td>" + user.getEmail() + "</td>");
-                out.println("<td>" + (user.isAdmin() ? "<span class='admin-badge'>🔑 ADMIN</span>" : "👤 USER") + "</td>");
-                out.println("<td>" + user.getLastActivity().format(formatter) + "</td>");
-                out.println("<td>" + userSessionCount + " active</td>");
+
+                // Apply zebra-striping based on row index
+                String currentRowStyle = (i % 2 == 0) ? trEvenStyle : trStyle;
+
+                out.println("<tr class='user-row' " + currentRowStyle + ">");
+                out.println("<td " + tdStyle + "><strong>" + user.getUsername() + "</strong></td>");
+                out.println("<td " + tdStyle + ">" + user.getEmail() + "</td>");
+                out.println("<td " + tdStyle + ">" + (user.isAdmin() ? "<span " + adminBadgeStyle + ">🔑 ADMIN</span>" : "👤 USER") + "</td>");
+                out.println("<td " + tdStyle + ">" + user.getLastActivity().format(formatter) + "</td>");
+                out.println("<td " + tdStyle + ">" + userSessionCount + " active</td>");
                 out.println("</tr>");
             }
 
@@ -1106,6 +1267,7 @@ public class AuctionServlet extends HttpServlet {
         }
 
         out.println("</div>");
+        addFooter(out);
         out.println("</body></html>");
     }
 
@@ -1127,18 +1289,24 @@ public class AuctionServlet extends HttpServlet {
 
         addCopyrightComment(out);
 
-        out.println("<div class='container'>");
-        out.println("<h1>📊 System Status</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+        out.println("<div class='container form-container'>");
 
-        // System Statistics (V1 comprehensive data)
+        // Main Title and Back Button
+        out.println("<div class='section-header' style='border-bottom:none;margin-bottom:0;'>");
+        out.println("<h2 style='font-size:2.2rem;display:flex;align-items:center;gap:10px;'><span style=\"font-size:2rem;\">📊</span> System Status</h2>");
+        out.println("</div>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn btn-secondary' style='margin:16px 0 12px 0;display:inline-block;'>← Back to Auctions</a>");
+        out.println("<hr style='margin:0 0 24px 0;'>");
+
+        // System Statistics
         int activeAuctions = auctionService.getActiveAuctionCount();
         int activeUsers = userService.getActiveUserCount();
         int activeSessions = sessionManager.getActiveSessionCount();
         double totalBidVolume = auctionManager.getTotalBidVolume();
 
-        out.println("<div class='status-card'>");
-        out.println("<h3>📈 System Statistics</h3>");
+        // System Statistics Card
+        out.println("<div class='auction-section' style='background:#f8f9fa;'>");
+        out.println("<h3 style='font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;font-weight:bold;'><span style=\"font-size:1.2rem;\">📉</span>&nbsp;System Statistics</h3>");
         out.println("<p><strong>Active Auctions:</strong> " + activeAuctions + "</p>");
         out.println("<p><strong>Registered Users:</strong> " + activeUsers + "</p>");
         out.println("<p><strong>Active Sessions:</strong> " + activeSessions + "</p>");
@@ -1146,8 +1314,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p><strong>Server Time:</strong> " + LocalDateTime.now().format(formatter) + " UTC</p>");
         out.println("</div>");
 
-        out.println("<div class='status-card'>");
-        out.println("<h3>🔧 EJB Components Status</h3>");
+        // EJB Components Status Card
+        out.println("<div class='auction-section' style='background:#f8f9fa;'>");
+        out.println("<h3 style='font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;font-weight:bold;'><span style=\"font-size:1.2rem;\">🛠️</span>&nbsp;EJB Components Status</h3>");
         out.println("<p>✅ AuctionService (Stateless EJB) - Active</p>");
         out.println("<p>✅ BidService (Stateless EJB) - Active</p>");
         out.println("<p>✅ UserService (Stateful EJB) - Active</p>");
@@ -1156,8 +1325,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p>✅ BidNotificationMDB (Message-Driven Bean) - Active</p>");
         out.println("</div>");
 
-        out.println("<div class='status-card'>");
-        out.println("<h3>📡 Services & Security Status</h3>");
+        // Services & Security Status Card
+        out.println("<div class='auction-section' style='background:#f8f9fa;'>");
+        out.println("<h3 style='font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;font-weight:bold;'><span style=\"font-size:1.2rem;\">🛡️</span>&nbsp;Services & Security Status</h3>");
         out.println("<p>✅ JMS Messaging - Active</p>");
         out.println("<p>✅ Session Management - Active</p>");
         out.println("<p>✅ Password Authentication - Active</p>");
@@ -1166,8 +1336,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p>✅ WebSocket Real-time Updates - Active</p>");
         out.println("</div>");
 
-        out.println("<div class='status-card'>");
-        out.println("<h3>🔐 Security Features</h3>");
+        // Security Features Card
+        out.println("<div class='auction-section' style='background:#f8f9fa;'>");
+        out.println("<h3 style='font-size:1.2rem;margin-bottom:16px;display:flex;align-items:center;font-weight:bold;'><span style=\"font-size:1.2rem;\">🔐</span>&nbsp;Security Features</h3>");
         out.println("<p>✅ SHA-256 Password Hashing</p>");
         out.println("<p>✅ Session Token Security</p>");
         out.println("<p>✅ IP Address Validation</p>");
@@ -1175,7 +1346,8 @@ public class AuctionServlet extends HttpServlet {
         out.println("<p>✅ Automatic Session Cleanup</p>");
         out.println("</div>");
 
-        out.println("</div>");
+        out.println("</div>"); // container, form-container
+
         addFooter(out);
         out.println("</body></html>");
     }
@@ -1183,104 +1355,107 @@ public class AuctionServlet extends HttpServlet {
     // [V2 Enhanced UI Components...]
 
     /**
-     * V2 Enhanced login form
+     * V2 Enhanced login form - CSS classes and structure match enhanced theme
      */
     private void showLoginForm(PrintWriter out) {
         out.println("<div class='form-container'>");
         out.println("<h3><i class='fas fa-sign-in-alt'></i> User Login</h3>");
         out.println("<form method='post' action='/AuctionSystem/auction/login'>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='username'>Username or Email:</label>");
+        out.println("<label for='username'><i class='fas fa-user'></i> Username or Email:</label>");
         out.println("<input type='text' id='username' name='username' required placeholder='Enter username or email'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='password'>Password:</label>");
+        out.println("<label for='password'><i class='fas fa-lock'></i> Password:</label>");
         out.println("<input type='password' id='password' name='password' required placeholder='Enter password'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<input type='submit' value='Login' class='btn btn-success'>");
+        out.println("<input type='submit' value='Login' class='btn btn-success btn-create'>");
         out.println("</div>");
+
         out.println("</form>");
-        out.println("<div style='background-color: #e9ecef; padding: 15px; margin-top: 15px; border-radius: 5px;'>");
+
+        out.println("<div class='message-info' style='margin-top: 15px;'>");
         out.println("<p><small><strong>📚 Sample Users:</strong></small></p>");
-        out.println("<p><small>• john_doe, jane_smith, bob_wilson, alice_brown (Password: <code>1234</code>)</small></p>");
-        out.println("<p><small><strong>🔑 Admin Access:</strong> admin@auction.com (Password: <code>11010001</code>)</small></p>");
+        out.println("<p><small>• john_doe, jane_smith, bob_wilson, alice_brown <br>(Password: <code>1234</code>)</small></p>");
+        out.println("<p><small><strong>🔑 Admin Access:</strong> admin@auction.com <br>(Password: <code>11010001</code>)</small></p>");
         out.println("</div>");
+
         out.println("</div>");
     }
 
     /**
-     * V2 Enhanced registration form
+     * V2 Enhanced registration form - CSS classes and structure match enhanced theme
      */
     private void showRegistrationForm(PrintWriter out) {
         out.println("<div class='form-container'>");
         out.println("<h3><i class='fas fa-user-plus'></i> Create New Account</h3>");
         out.println("<form method='post' action='/AuctionSystem/auction/register'>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='reg_username'>Username:</label>");
+        out.println("<label for='reg_username'><i class='fas fa-user'></i> Username:</label>");
         out.println("<input type='text' id='reg_username' name='regUsername' required placeholder='Choose a unique username'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='reg_email'>Email:</label>");
+        out.println("<label for='reg_email'><i class='fas fa-envelope'></i> Email:</label>");
         out.println("<input type='email' id='reg_email' name='regEmail' required placeholder='Enter your email address'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='reg_password'>Password:</label>");
+        out.println("<label for='reg_password'><i class='fas fa-lock'></i> Password:</label>");
         out.println("<input type='password' id='reg_password' name='regPassword' required minlength='4' placeholder='Minimum 4 characters'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<label for='reg_confirm_password'>Confirm Password:</label>");
+        out.println("<label for='reg_confirm_password'><i class='fas fa-lock'></i> Confirm Password:</label>");
         out.println("<input type='password' id='reg_confirm_password' name='regConfirmPassword' required minlength='4' placeholder='Confirm your password'>");
         out.println("</div>");
+
         out.println("<div class='form-group'>");
-        out.println("<input type='submit' value='Register' class='btn btn-success'>");
+        out.println("<input type='submit' value='Register' class='btn btn-secondary btn-create'>");
         out.println("</div>");
+
         out.println("</form>");
         out.println("</div>");
     }
 
     /**
-     * V2 Enhanced user info with statistics
+     * V2 Enhanced user info with statistics using enhanced CSS classes.
      */
     private void showUserInfo(PrintWriter out, String username, boolean isAdmin) {
-        out.println("<div class='user-info-container'>");
-        out.println("<div class='user-welcome'>");
-        out.println("<h3><i class='fas fa-user-circle'></i> Welcome, " + escapeHtml(username) + "!</h3>");
+        out.println("<div class='form-container user-info' style='margin-bottom: 24px;'>");
 
+        // User Welcome Section
+        out.println("<div style='display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 12px;'>");
+        out.println("<h3 style='display:flex;align-items:center;gap:10px;margin:0;'>");
+        out.println("<i class='fas fa-user-circle'></i> Welcome, " + escapeHtml(username) + "!");
+        out.println("</h3>");
         if (isAdmin) {
-            out.println("<div class='admin-badge'>");
-            out.println("<i class='fas fa-crown'></i> Administrator");
-            out.println("</div>");
+            out.println("<span class='admin-badge'><i class='fas fa-crown'></i> Administrator</span>");
         }
-
         out.println("</div>");
 
-        // User actions
-        out.println("<div class='user-actions'>");
-        out.println("<div class='action-buttons'>");
+        // User Actions (buttons)
+        out.println("<div style='margin-bottom: 18px;'>");
+        out.println("<div style='display:flex;gap:10px;flex-wrap:wrap;'>");
 
-        // View won auctions
-        out.println("<a href='/AuctionSystem/auction/?view=my_wins' class='btn btn-small'>");
+        out.println("<a href='/AuctionSystem/auction/?view=my_wins' class='btn btn-small btn-success' style='text-decoration:none;'>");
         out.println("<i class='fas fa-trophy'></i> My Wins");
         out.println("</a>");
 
-        // Live notifications
-        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='btn btn-small'>");
+        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='btn btn-small btn-secondary' style='text-decoration:none;'>");
         out.println("<i class='fas fa-bell'></i> Live Updates");
         out.println("</a>");
 
-        // Admin panel (if admin)
         if (isAdmin) {
-            out.println("<a href='/AuctionSystem/auction/admin/sessions' class='btn btn-small btn-admin'>");
+            out.println("<a href='/AuctionSystem/auction/admin/sessions' class='btn btn-small' style='background:linear-gradient(135deg,#e74c3c 0%,#c0392b 100%);color:white;'>");
             out.println("<i class='fas fa-cogs'></i> Admin Panel");
             out.println("</a>");
         }
-
-        // Logout button
-        out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small logout-btn'>");
-        out.println("<i class='fas fa-sign-out-alt'></i> Logout");
-        out.println("</a>");
-
         out.println("</div>");
         out.println("</div>");
 
@@ -1327,10 +1502,11 @@ public class AuctionServlet extends HttpServlet {
 
     /**
      * V2 Enhanced system statistics with completed auctions
+     * (Modern UI, system statistics in grid cards; matches your enhanced CSS)
      */
     private void showSystemStatistics(PrintWriter out, int activeCount, int completedCount) {
         out.println("<div class='stats-container'>");
-        out.println("<h3><i class='fas fa-chart-line'></i> System Statistics</h3>");
+        out.println("<h3 style='margin-bottom:18px;display:flex;align-items:center;gap:10px;'><i class='fas fa-chart-line'></i> System Statistics</h3>");
 
         out.println("<div class='stats-grid'>");
 
@@ -1656,7 +1832,7 @@ public class AuctionServlet extends HttpServlet {
 
         if (error != null) {
             out.println("<div class='message message-error'>");
-            out.println("<i class='fas fa-exclamation-triangle'></i> ");
+            out.println();
             switch (error) {
                 case "login_failed":
                     out.println("❌ Login failed! Invalid username/email or password.");
@@ -1674,46 +1850,46 @@ public class AuctionServlet extends HttpServlet {
                     out.println("📝 Please enter both username/email and password.");
                     break;
                 case "not_logged_in":
-                    out.println("Please log in to create auctions or place bids.");
+                    out.println("🔑 Please log in to create auctions or place bids.");
                     break;
                 case "invalid_bid":
-                    out.println("Invalid bid amount. Please enter a valid bid higher than the current bid.");
+                    out.println("💸 Invalid bid amount. Please enter a valid bid higher than the current bid.");
                     break;
                 case "auction_not_found":
-                    out.println("The requested auction could not be found.");
+                    out.println("🔎 The requested auction could not be found.");
                     break;
                 case "auction_ended":
-                    out.println("This auction has already ended. You cannot place more bids.");
+                    out.println("⏳ This auction has already ended. You cannot place more bids.");
                     break;
                 case "invalid_duration":
-                    out.println("Invalid auction duration. Please select between 1 minute and 7 days.");
+                    out.println("🕒 Invalid auction duration. Please select between 1 minute and 7 days.");
                     break;
                 case "missing_fields":
-                    out.println("Please fill in all required fields.");
+                    out.println("⚠️ Please fill in all required fields.");
                     break;
                 case "invalid_price":
-                    out.println("Please enter a valid starting price greater than $0.");
+                    out.println("💲 Please enter a valid starting price greater than $0.");
                     break;
                 case "invalid_numbers":
-                    out.println("Please enter valid numeric values for price and duration.");
+                    out.println("🔢 Please enter valid numeric values for price and duration.");
                     break;
                 case "creation_failed":
-                    out.println("Failed to create auction. Please try again.");
+                    out.println("❗ Failed to create auction. Please try again.");
                     break;
                 case "system_error":
-                    out.println("A system error occurred. Please try again later.");
+                    out.println("💥 A system error occurred. Please try again later.");
                     break;
                 case "user_already_exists":
-                    out.println("Username or email already exists. Please choose different credentials.");
+                    out.println("👤 Username or email already exists. Please choose different credentials.");
                     break;
                 case "password_mismatch":
-                    out.println("Passwords do not match. Please try again.");
+                    out.println("🔁 Passwords do not match. Please try again.");
                     break;
                 case "password_too_short":
-                    out.println("Password must be at least 4 characters long.");
+                    out.println("📏 Password must be at least 4 characters long.");
                     break;
                 case "invalid_email":
-                    out.println("Please enter a valid email address.");
+                    out.println("📧 Please enter a valid email address.");
                     break;
                 default:
                     out.println("❌ " + escapeHtml(error));
@@ -1965,7 +2141,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("Developed by <a href=\"https://github.com/isharax9\" target=\"_blank\" style=\"color: #007bff; text-decoration: none;\">@isharax9</a>");
         out.println("</p>");
         out.println("<p style=\"margin: 0; font-size: 12px; color: #888;\">");
-        out.println("Auction System Dashboard | BCD 1 Research Assignment");
+        out.println("Online Auction System | BCD 1 Research Assignment");
         out.println("</p>");
         out.println("</div>");
         out.println("</footer>");
