@@ -226,20 +226,34 @@ public class AuctionServlet extends HttpServlet {
      * Enhanced navigation combining V1 comprehensive features with V2 styling
      */
     private void showEnhancedNavigation(PrintWriter out, String currentUser, boolean isLoggedIn, boolean isAdmin) {
-        out.println("<div class='nav-bar'>");
-        out.println("<a href='/AuctionSystem/auction/' class='nav-link'>🏠 Home</a>");
-        out.println("<a href='/AuctionSystem/auction/users' class='nav-link'>👥 Users</a>");
-        out.println("<a href='/AuctionSystem/auction/status' class='nav-link'>📊 System Status</a>");
-        out.println("<a href='/AuctionSystem/auction/sessions' class='nav-link'>🔐 Sessions</a>");
-        out.println("<a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'>🔔 Notifications</a>");
+        // The .nav-bar class is a flex container with "justify-content: space-between".
+        // We create two inner divs to group links to the left and right for proper alignment.
+        out.println("<nav class='nav-bar'>");
 
-        if (currentUser != null) {
-            out.println("<a href='/AuctionSystem/auction/profile' class='nav-link'>👤 Profile</a>");
+        // --- Left-side navigation links ---
+        out.println("  <div class='nav-actions'>");
+        // Replaced emoji with a Font Awesome icon for consistent styling.
+        out.println("    <a href='/AuctionSystem/auction/' class='nav-link'><i class='fa-solid fa-house'></i> Home</a>");
+        out.println("    <a href='/AuctionSystem/auction/users' class='nav-link'><i class='fa-solid fa-users'></i> Users</a>");
+        out.println("    <a href='/AuctionSystem/auction/status' class='nav-link'><i class='fa-solid fa-chart-line'></i> System Status</a>");
+        out.println("    <a href='/AuctionSystem/auction/sessions' class='nav-link'><i class='fa-solid fa-lock'></i> Sessions</a>");
+
+
+        out.println("    <a href='/AuctionSystem/real-time-notifications.html' class='nav-link' target='_blank'><i class='fa-solid fa-bell'></i> Notifications</a>");
+        out.println("  </div>");
+
+        // --- Right-side user-specific links ---
+        if (isLoggedIn) {
+            out.println("  <div class='nav-actions'>");
+            out.println("    <a href='/AuctionSystem/auction/profile' class='nav-link'><i class='fa-solid fa-user-circle'></i> Profile</a>");
             if (isAdmin) {
-                out.println("<a href='/AuctionSystem/auction/admin/sessions/' class='nav-link admin-link'>🔧 Admin Panel</a>");
+                // The styled .admin-link is now grouped on the right.
+                out.println("    <a href='/AuctionSystem/auction/admin/sessions/' class='nav-link admin-link'><i class='fa-solid fa-screwdriver-wrench'></i> Admin Panel</a>");
             }
+            out.println("  </div>");
         }
-        out.println("</div>");
+
+        out.println("</nav>");
     }
 
     /**
@@ -250,12 +264,15 @@ public class AuctionServlet extends HttpServlet {
         int activeSessions = sessionManager.getActiveSessionCount();
         double totalBidVolume = auctionManager.getTotalBidVolume();
 
-        out.println("<div class='status'>");
-        out.println("<strong>📈 System Status:</strong> ");
-        out.println(activeCount + " active auctions • " + completedCount + " completed • " +
-                activeUsers + " users • " + activeSessions + " sessions • ");
-        out.println("$" + String.format("%.2f", totalBidVolume) + " total volume");
-        out.println("<br><small>Last updated: " + LocalDateTime.now().format(formatter) + " UTC</small>");
+        out.println("<div style='background-color: #f8f9fa; border-left: 4px solid #007bff; padding: 15px; margin: 15px 0; border-radius: 4px; font-size: 14px; color: #495057;'>");
+        out.println("<div style='display: flex; align-items: center; margin-bottom: 5px;'>");
+        out.println("<span style='margin-right: 8px; font-size: 16px;'>📈</span>");
+        out.println("<strong style='color: #333;'>System Status:</strong>");
+        out.println("<span style='margin-left: 8px;'>" + activeCount + " active auctions • " + completedCount + " completed • " + activeUsers + " users • " + activeSessions + " sessions • $" + String.format("%.2f", totalBidVolume) + " total volume</span>");
+        out.println("</div>");
+        out.println("<div style='font-size: 12px; color: #6c757d; margin-top: 5px;'>");
+        out.println("Last updated: " + LocalDateTime.now().format(formatter) + " UTC");
+        out.println("</div>");
         out.println("</div>");
     }
 
@@ -266,12 +283,15 @@ public class AuctionServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
         String sessionToken = session != null ? (String) session.getAttribute("sessionToken") : null;
 
-        out.println("<div class='user-info'>");
-        out.println("<strong>👤 Welcome, " + escapeHtml(username) + "!</strong> ");
+        // FIX: Replaced 'user-info' with 'message message-success' for the styled green bar.
+        out.println("<div class='message message-success'>");
 
-        // Show admin badge if user is admin
+        // FIX: Replaced emoji with a Font Awesome icon for consistency.
+        out.println("<strong><i class='fa-solid fa-user'></i> Welcome, " + escapeHtml(username) + "!</strong> ");
+
+        // FIX: Replaced 'admin-badge' with the standard 'badge' class.
         if (userService.isUserAdmin(username)) {
-            out.println("<span class='admin-badge'>🔑 ADMIN</span> ");
+            out.println("<span class='badge' style='background-color: #e74c3c;'>ADMIN</span> ");
         }
 
         if (sessionToken != null) {
@@ -282,16 +302,17 @@ public class AuctionServlet extends HttpServlet {
             }
         }
 
-        out.println("| <a href='/AuctionSystem/auction/change-password class='btn btn-small logout-btn'>");
-        out.println("🔑 Change Password");
+        // FIX: Corrected the broken HTML href and CSS classes. Replaced emoji with icon.
+        out.println("| <a href='/AuctionSystem/auction/change-password' class='btn btn-small btn-secondary'>");
+        out.println("<i class='fa-solid fa-key'></i> Change Password");
         out.println("</a> |");
 
-
-        // Logout button
-        out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small btn-primary'>");
+        // FIX: Used a valid button style. An inline style is used for the red color.
+        out.println("<a href='/AuctionSystem/auction/logout' class='btn btn-small' style='background-color: #c0392b; color: white;'>");
         out.println("<i class='fas fa-sign-out-alt'></i> Logout");
         out.println("</a>");
-        out.println("</form>");
+
+        // FIX: Removed the stray, unopened </form> tag.
         out.println("</div>");
     }
 
@@ -341,9 +362,9 @@ public class AuctionServlet extends HttpServlet {
         out.println("<div class='time-input-group'>");
         out.println("<label for='durationMinutes'>Minutes:</label>");
         out.println("<select id='durationMinutes' name='durationMinutes' required>");
-        int[] minutes = {0, 15, 30, 45};
-        for (int min : minutes) {
-            out.println("<option value='" + min + "'>" + min + "</option>");
+        for (int min = 0; min <= 60; min++) { // 0 to 60 min (1 hour)
+            String selected = (min == 1) ? " selected" : "";
+            out.println("<option value='" + min + "'" + selected + ">" + min + "</option>");
         }
         out.println("</select>");
         out.println("</div>");
@@ -1675,7 +1696,7 @@ public class AuctionServlet extends HttpServlet {
 
         if (error != null) {
             out.println("<div class='message message-error'>");
-            out.println("<i class='fas fa-exclamation-triangle'></i> ");
+            out.println();
             switch (error) {
                 case "login_failed":
                     out.println("❌ Login failed! Invalid username/email or password.");
@@ -1693,46 +1714,46 @@ public class AuctionServlet extends HttpServlet {
                     out.println("📝 Please enter both username/email and password.");
                     break;
                 case "not_logged_in":
-                    out.println("Please log in to create auctions or place bids.");
+                    out.println("🔑 Please log in to create auctions or place bids.");
                     break;
                 case "invalid_bid":
-                    out.println("Invalid bid amount. Please enter a valid bid higher than the current bid.");
+                    out.println("💸 Invalid bid amount. Please enter a valid bid higher than the current bid.");
                     break;
                 case "auction_not_found":
-                    out.println("The requested auction could not be found.");
+                    out.println("🔎 The requested auction could not be found.");
                     break;
                 case "auction_ended":
-                    out.println("This auction has already ended. You cannot place more bids.");
+                    out.println("⏳ This auction has already ended. You cannot place more bids.");
                     break;
                 case "invalid_duration":
-                    out.println("Invalid auction duration. Please select between 1 minute and 7 days.");
+                    out.println("🕒 Invalid auction duration. Please select between 1 minute and 7 days.");
                     break;
                 case "missing_fields":
-                    out.println("Please fill in all required fields.");
+                    out.println("⚠️ Please fill in all required fields.");
                     break;
                 case "invalid_price":
-                    out.println("Please enter a valid starting price greater than $0.");
+                    out.println("💲 Please enter a valid starting price greater than $0.");
                     break;
                 case "invalid_numbers":
-                    out.println("Please enter valid numeric values for price and duration.");
+                    out.println("🔢 Please enter valid numeric values for price and duration.");
                     break;
                 case "creation_failed":
-                    out.println("Failed to create auction. Please try again.");
+                    out.println("❗ Failed to create auction. Please try again.");
                     break;
                 case "system_error":
-                    out.println("A system error occurred. Please try again later.");
+                    out.println("💥 A system error occurred. Please try again later.");
                     break;
                 case "user_already_exists":
-                    out.println("Username or email already exists. Please choose different credentials.");
+                    out.println("👤 Username or email already exists. Please choose different credentials.");
                     break;
                 case "password_mismatch":
-                    out.println("Passwords do not match. Please try again.");
+                    out.println("🔁 Passwords do not match. Please try again.");
                     break;
                 case "password_too_short":
-                    out.println("Password must be at least 4 characters long.");
+                    out.println("📏 Password must be at least 4 characters long.");
                     break;
                 case "invalid_email":
-                    out.println("Please enter a valid email address.");
+                    out.println("📧 Please enter a valid email address.");
                     break;
                 default:
                     out.println("❌ " + escapeHtml(error));
