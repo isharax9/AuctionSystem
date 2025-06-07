@@ -168,9 +168,10 @@ public class AuctionServlet extends HttpServlet {
         out.println("<div class='container'>");
 
         // Header with enhanced navigation
-        out.println("<div class='header'>");
-        out.println("<h1>🏺 Online Auction System</h1>");
-        out.println("<p>Enhanced with History & Duration Control - Premium Auction Platform</p>");
+//        out.println("<div class='auction-header'>");
+        out.println("<div class='header h1'>");
+        out.println("<h1> 🪉⎰Nawwa Online Auction⎱🏺</h1>");
+        out.println("<span style='color: white;'>An online auction system for selling items with bidding capabilities.</span>");
         out.println("</div>");
 
         // Show messages if any
@@ -582,7 +583,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("<div class='container'>");
 
         out.println("<h1>🏺 " + escapeHtml(auction.getTitle()) + "</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn btn-secondary'>← Back to Auctions</a><hr>");
 
         // Show user info if logged in (V1 feature)
         if (currentUser != null) {
@@ -918,9 +919,6 @@ public class AuctionServlet extends HttpServlet {
 
     // [Additional V1 methods continue here...]
 
-    /**
-     * V1 Show change password form
-     */
     private void showChangePasswordForm(HttpServletRequest request, PrintWriter out) {
         String currentUser = getCurrentUser(request);
         if (currentUser == null) {
@@ -930,16 +928,16 @@ public class AuctionServlet extends HttpServlet {
 
         out.println("<html><head><title>Change Password</title>");
         out.println("<meta charset='UTF-8'>");
-        addEnhancedCSS(out);
-        out.println("</head><body>");
+        out.println("</head><body style=\"margin:0;background:#f5f6fa;font-family:'Segoe UI',Arial,sans-serif;\">");
 
-        out.println("<div class='container'>");
-        out.println("<h1>🔑 Change Password</h1>");
-        out.println("<a href='/AuctionSystem/auction/'>← Back to Main Page</a><hr>");
+        out.println("<div style=\"max-width:400px;margin:50px auto;padding:32px 28px 26px 28px;background:#fff;border-radius:12px;box-shadow:0 2px 12px #0001;\">");
+        out.println("<h1 style=\"font-size:1.7em;margin-bottom:10px;\">🔑 Change Password</h1>");
+        out.println("<a href='/AuctionSystem/auction/' style=\"display:inline-block;margin-bottom:18px;padding:7px 16px;background:#f3f3fb;color:#333;text-decoration:none;border-radius:6px;font-weight:500;transition:background 0.2s;\">← Back to Main Page</a>");
+        out.println("<hr style=\"margin:18px 0 26px 0;border:none;border-top:1px solid #e0e0e0;\">");
 
         String error = request.getParameter("error");
         if (error != null) {
-            out.println("<div class='error-msg'>");
+            out.println("<div style=\"background:#ffe6e6;color:#c00;border:1px solid #ffb4b4;border-radius:6px;padding:12px 14px;margin-bottom:18px;font-size:1em;\">");
             switch (error) {
                 case "wrong_password":
                     out.println("❌ Current password is incorrect.");
@@ -961,78 +959,111 @@ public class AuctionServlet extends HttpServlet {
         }
 
         out.println("<form method='post' action='/AuctionSystem/auction/change-password'>");
-        out.println("<div class='form-group'>");
-        out.println("<label for='current_password'>Current Password:</label>");
-        out.println("<input type='password' id='current_password' name='currentPassword' required>");
-        out.println("</div>");
-        out.println("<div class='form-group'>");
-        out.println("<label for='new_password'>New Password:</label>");
-        out.println("<input type='password' id='new_password' name='newPassword' required minlength='4'>");
-        out.println("</div>");
-        out.println("<div class='form-group'>");
-        out.println("<label for='confirm_password'>Confirm New Password:</label>");
-        out.println("<input type='password' id='confirm_password' name='confirmPassword' required minlength='4'>");
-        out.println("</div>");
-        out.println("<div class='form-group'>");
-        out.println("<input type='submit' value='Change Password' class='btn'>");
-        out.println("</div>");
-        out.println("</form>");
 
+        out.println("<div style=\"margin-bottom:16px;\">");
+        out.println("<label for='current_password' style=\"display:block;font-weight:500;margin-bottom:5px;\">Current Password:</label>");
+        out.println("<input type='password' id='current_password' name='currentPassword' required style=\"width:100%;padding:9px 10px;border:1.5px solid #ccd7e8;border-radius:6px;font-size:1em;\">");
+        out.println("</div>");
+
+        out.println("<div style=\"margin-bottom:16px;\">");
+        out.println("<label for='new_password' style=\"display:block;font-weight:500;margin-bottom:5px;\">New Password:</label>");
+        out.println("<input type='password' id='new_password' name='newPassword' required minlength='4' style=\"width:100%;padding:9px 10px;border:1.5px solid #ccd7e8;border-radius:6px;font-size:1em;\">");
+        out.println("</div>");
+
+        out.println("<div style=\"margin-bottom:18px;\">");
+        out.println("<label for='confirm_password' style=\"display:block;font-weight:500;margin-bottom:5px;\">Confirm New Password:</label>");
+        out.println("<input type='password' id='confirm_password' name='confirmPassword' required minlength='4' style=\"width:100%;padding:9px 10px;border:1.5px solid #ccd7e8;border-radius:6px;font-size:1em;\">");
+        out.println("</div>");
+
+        out.println("<div>");
+        out.println("<input type='submit' value='Change Password' style=\"width:100%;background:#1eb980;color:#fff;font-size:1.07em;font-weight:600;padding:12px 0;border:none;border-radius:7px;cursor:pointer;box-shadow:0 1px 4px #0002;transition:background 0.2s;\">");
+        out.println("</div>");
+
+        out.println("</form>");
         out.println("</div>");
         out.println("</body></html>");
     }
-
-    /**
-     * V1 Show session status
-     */
+    //    Session status
     private void showSessionStatus(HttpServletRequest request, PrintWriter out) {
-        out.println("<html><head><title>Session Status</title>");
-        out.println("<meta charset='UTF-8'>");
-        addEnhancedCSS(out);
-        out.println("</head><body>");
+        // --- CSS Style Definitions (for inline styles on cards) ---
+        String bodyStyle = "style='margin:0; background:#f5f6fa; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;'";
+        String mainCardStyle = "style='max-width: 600px; margin: 40px auto; padding: 32px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);'";
+        String h1Style = "style='font-size: 1.8em; margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;'";
+        String infoCardHeaderStyle = "style='margin-top: 0; font-size: 1.2em; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #e9ecef; padding-bottom: 12px; margin-bottom: 16px;'";
+        String infoCardBaseStyle = "border-radius: 10px; padding: 24px; margin-bottom: 22px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);";
+        String statsCardStyle = "style='" + infoCardBaseStyle + " background: #f8faff; border: 1px solid #dbe6fb;'";
+        String userCardStyle = "style='" + infoCardBaseStyle + " background: #f7fff9; border: 1px solid #d4f3dd;'";
+        String guestCardStyle = "style='" + infoCardBaseStyle + " background: #fffaf2; border: 1px solid #ffe2ba;'";
+        String rowStyle = "style='display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e9ecef;'";
+        String lastRowStyle = "style='display: flex; justify-content: space-between; align-items: center; padding: 10px 0;'";
+        String labelStyle = "style='font-weight: 600; color: #333;'";
+        String valueStyle = "style='color: #555;'";
 
-        out.println("<div class='container'>");
-        out.println("<h1>🔐 Session Status</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
 
-        // Session Statistics
+        // --- HTML Output ---
+        out.println("<!DOCTYPE html>");
+        out.println("<html lang='en'>");
+        out.println("<head>");
+        out.println("  <title>Session Status</title>");
+        out.println("  <meta charset='UTF-8'>");
+
+        // --- ADD THIS STYLE BLOCK ---
+        // This defines the styles for your 'btn-success' class and the 'hr' tag.
+        out.println("  <style>");
+        out.println("    .btn { display: inline-block; font-weight: 500; text-align: center; cursor: pointer; user-select: none; background-color: transparent; border: 1px solid transparent; padding: 8px 16px; font-size: 1rem; border-radius: 8px; text-decoration: none; transition: all .15s ease-in-out; }");
+        out.println("    .btn-success { color: #fff; background-color: #28a745; border-color: #28a745; }");
+        out.println("    .btn-success:hover { color: #fff; background-color: #218838; border-color: #1e7e34; }");
+        out.println("    hr { margin: 24px 0; border: 0; border-top: 1px solid #e9ecef; }");
+        out.println("  </style>");
+        // --- END STYLE BLOCK ---
+
+        out.println("</head>");
+        out.println("<body " + bodyStyle + ">");
+
+        out.println("<div " + mainCardStyle + ">");
+        out.println("<h1 " + h1Style + "><span>🔐</span> Session Status</h1>");
+        // This class will now be styled correctly by the <style> block above
+        out.println("<a href='/AuctionSystem/auction/' class='btn btn-success'>← Back to Auctions</a>");
+        out.println("<hr>");
+
+        // Session Statistics Card
         int activeSessionCount = sessionManager.getActiveSessionCount();
-        out.println("<div class='status-card'>");
-        out.println("<h3>📊 Session Statistics</h3>");
-        out.println("<p><strong>Total Active Sessions:</strong> " + activeSessionCount + "</p>");
-        out.println("<p><strong>Server Time:</strong> " + LocalDateTime.now().format(formatter) + " UTC</p>");
+        out.println("<div " + statsCardStyle + ">");
+        out.println("<h3 " + infoCardHeaderStyle + "><span>📊</span>Session Statistics</h3>");
+        out.println("<div " + rowStyle + "><span " + labelStyle + ">Total Active Sessions:</span><span " + valueStyle + ">" + activeSessionCount + "</span></div>");
+        out.println("<div " + lastRowStyle + "><span " + labelStyle + ">Server Time:</span><span " + valueStyle + ">" + LocalDateTime.now().format(formatter) + " UTC</span></div>");
         out.println("</div>");
 
-        // Current user session info
+        // Current User Session Info Card (Conditional)
         String currentUser = getCurrentUser(request);
         if (currentUser != null) {
             HttpSession session = request.getSession(false);
-            String sessionToken = session != null ? (String) session.getAttribute("sessionToken") : null;
+            String sessionToken = (session != null) ? (String) session.getAttribute("sessionToken") : null;
 
             if (sessionToken != null) {
                 ActiveSessionInfo sessionInfo = sessionManager.getSessionInfo(sessionToken);
                 if (sessionInfo != null) {
-                    out.println("<div class='status-card'>");
-                    out.println("<h3>👤 Your Session Info</h3>");
-                    out.println("<p><strong>Username:</strong> " + sessionInfo.getUsername() + "</p>");
-                    out.println("<p><strong>Login Time:</strong> " + sessionInfo.getLoginTime().format(formatter) + " UTC</p>");
-                    out.println("<p><strong>Session Duration:</strong> " + sessionInfo.getSessionDurationMinutes() + " minutes</p>");
-                    out.println("<p><strong>Last Activity:</strong> " + sessionInfo.getInactiveDurationMinutes() + " minutes ago</p>");
-                    out.println("<p><strong>IP Address:</strong> " + sessionInfo.getIpAddress() + "</p>");
+                    out.println("<div " + userCardStyle + ">");
+                    out.println("<h3 " + infoCardHeaderStyle + "><span>👤</span>Your Session Info</h3>");
+                    out.println("<div " + rowStyle + "><span " + labelStyle + ">Username:</span><span " + valueStyle + ">" + sessionInfo.getUsername() + "</span></div>");
+                    out.println("<div " + rowStyle + "><span " + labelStyle + ">Login Time:</span><span " + sessionInfo.getLoginTime().format(formatter) + " UTC</span></div>");
+                    out.println("<div " + rowStyle + "><span " + labelStyle + ">Session Duration:</span><span " + valueStyle + ">" + sessionInfo.getSessionDurationMinutes() + " minutes</span></div>");
+                    out.println("<div " + rowStyle + "><span " + labelStyle + ">Last Activity:</span><span " + valueStyle + ">" + sessionInfo.getInactiveDurationMinutes() + " minutes ago</span></div>");
+                    out.println("<div " + lastRowStyle + "><span " + labelStyle + ">IP Address:</span><span " + valueStyle + ">" + sessionInfo.getIpAddress() + "</span></div>");
                     out.println("</div>");
                 }
             }
         } else {
-            out.println("<div class='status-card'>");
-            out.println("<h3>👤 Session Info</h3>");
+            out.println("<div " + guestCardStyle + ">");
+            out.println("<h3 " + infoCardHeaderStyle + "><span>👤</span>Your Session Info</h3>");
             out.println("<p>You are not currently logged in.</p>");
             out.println("</div>");
         }
 
         out.println("</div>");
+        addFooter(out);
         out.println("</body></html>");
     }
-
     /**
      * V1 Show user profile
      */
@@ -1045,86 +1076,190 @@ public class AuctionServlet extends HttpServlet {
 
         out.println("<html><head><title>User Profile</title>");
         out.println("<meta charset='UTF-8'>");
-        addEnhancedCSS(out);
-        out.println("</head><body>");
+        out.println("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+        out.println("</head><body style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #212529; line-height: 1.6;'>");
 
-        out.println("<div class='container'>");
-        out.println("<h1>👤 User Profile</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+        // Container
+        out.println("<div style='max-width: 1200px; margin: 0 auto; padding: 20px;'>");
+
+        // Header
+        out.println("<h1 style='color: #343a40; margin-bottom: 20px; font-size: 2rem; font-weight: 600; display: flex; align-items: center; gap: 10px;'>");
+        out.println("<span>👤</span> User Profile</h1>");
+
+        // Back button
+        out.println("<a href='/AuctionSystem/auction/' style='display: inline-block; padding: 8px 16px; background-color: #6c757d; color: 4F565DFF; text-decoration: none; border-radius: 4px; font-size: 14px; margin-bottom: 20px; transition: background-color 0.3s ease;' onmouseover='this.style.backgroundColor=\"#5a6268\";' onmouseout='this.style.backgroundColor=\"#6c757d\";'>← Back to Auctions</a>");
+
+        out.println("<hr style='border: none; border-top: 1px solid #dee2e6; margin: 20px 0;'>");
 
         User user = userService.getUserByUsername(currentUser);
         if (user != null) {
-            out.println("<div class='profile-card'>");
-            out.println("<h3>Profile Information</h3>");
-            out.println("<p><strong>Username:</strong> " + user.getUsername());
+            // Profile Information Card
+            out.println("<div style='background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #007bff;'>");
+            out.println("<h3 style='color: #495057; margin-top: 0; margin-bottom: 20px; font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 8px;'>");
+            out.println("<span>ℹ️</span> Profile Information</h3>");
+
+            // Username
+            out.println("<p style='margin: 12px 0; font-size: 15px;'>");
+            out.println("<strong style='color: #495057; display: inline-block; width: 140px;'>Username:</strong> ");
+            out.println("<span style='color: #212529;'>" + user.getUsername() + "</span>");
             if (user.isAdmin()) {
-                out.println(" <span class='admin-badge'>🔑 ADMIN</span>");
+                out.println(" <span style='background: linear-gradient(135deg, #ffd700, #ffed4a); color: #8b4513; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; margin-left: 8px;'>🔑 ADMIN</span>");
             }
             out.println("</p>");
-            out.println("<p><strong>Email:</strong> " + user.getEmail() + "</p>");
-            out.println("<p><strong>Last Activity:</strong> " + user.getLastActivity().format(formatter) + " UTC</p>");
-            out.println("<p><strong>Account Status:</strong> " + (user.isActive() ? "🟢 Active" : "🔴 Inactive") + "</p>");
-            out.println("<p><a href='/AuctionSystem/auction/change-password' class='btn'>🔑 Change Password</a></p>");
+
+            // Email
+            out.println("<p style='margin: 12px 0; font-size: 15px;'>");
+            out.println("<strong style='color: #495057; display: inline-block; width: 140px;'>Email:</strong> ");
+            out.println("<span style='color: #212529;'>" + user.getEmail() + "</span>");
+            out.println("</p>");
+
+            // Last Activity
+            out.println("<p style='margin: 12px 0; font-size: 15px;'>");
+            out.println("<strong style='color: #495057; display: inline-block; width: 140px;'>Last Activity:</strong> ");
+            out.println("<span style='color: #6c757d;'>" + user.getLastActivity().format(formatter) + " UTC</span>");
+            out.println("</p>");
+
+            // Account Status
+            out.println("<p style='margin: 12px 0; font-size: 15px;'>");
+            out.println("<strong style='color: #495057; display: inline-block; width: 140px;'>Account Status:</strong> ");
+            if (user.isActive()) {
+                out.println("<span style='color: #28a745; font-weight: 600;'>🟢 Active</span>");
+            } else {
+                out.println("<span style='color: #dc3545; font-weight: 600;'>🔴 Inactive</span>");
+            }
+            out.println("</p>");
+
+            // Change Password Button
+            out.println("<p style='margin-top: 20px; padding-top: 16px; border-top: 1px solid #e9ecef;'>");
+            out.println("<a href='/AuctionSystem/auction/change-password' style='display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 500; transition: background-color 0.3s ease;' onmouseover='this.style.backgroundColor=\"#0056b3\";' onmouseout='this.style.backgroundColor=\"#007bff\";'>🔑 Change Password</a>");
+            out.println("</p>");
             out.println("</div>");
 
-            // Show user's active sessions
+            // Active Sessions Card
             List<ActiveSessionInfo> userSessions = sessionManager.getActiveSessionsForUser(currentUser);
-            out.println("<div class='profile-card'>");
-            out.println("<h3>Your Active Sessions (" + userSessions.size() + ")</h3>");
+            out.println("<div style='background: white; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 4px solid #28a745;'>");
+            out.println("<h3 style='color: #495057; margin-top: 0; margin-bottom: 20px; font-size: 1.25rem; font-weight: 600; display: flex; align-items: center; gap: 8px;'>");
+            out.println("<span>🔐</span> Your Active Sessions (" + userSessions.size() + ")</h3>");
 
             if (userSessions.isEmpty()) {
-                out.println("<p>No other active sessions found.</p>");
+                out.println("<p style='color: #6c757d; font-style: italic; margin: 0;'>No other active sessions found.</p>");
             } else {
-                out.println("<table>");
-                out.println("<tr><th>Login Time</th><th>Duration</th><th>IP Address</th><th>Last Activity</th></tr>");
+                // Sessions Table
+                out.println("<div style='overflow-x: auto;'>");
+                out.println("<table style='width: 100%; border-collapse: collapse; margin-top: 10px;'>");
+                out.println("<thead>");
+                out.println("<tr style='background-color: #f8f9fa;'>");
+                out.println("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057;'>Login Time</th>");
+                out.println("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057;'>Duration</th>");
+                out.println("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057;'>IP Address</th>");
+                out.println("<th style='padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057;'>Last Activity</th>");
+                out.println("</tr>");
+                out.println("</thead>");
+                out.println("<tbody>");
 
                 for (ActiveSessionInfo sessionInfo : userSessions) {
-                    out.println("<tr>");
-                    out.println("<td>" + sessionInfo.getLoginTime().format(formatter) + "</td>");
-                    out.println("<td>" + sessionInfo.getSessionDurationMinutes() + " min</td>");
-                    out.println("<td>" + sessionInfo.getIpAddress() + "</td>");
-                    out.println("<td>" + sessionInfo.getInactiveDurationMinutes() + " min ago</td>");
+                    out.println("<tr style='transition: background-color 0.2s ease;' onmouseover='this.style.backgroundColor=\"#f8f9fa\";' onmouseout='this.style.backgroundColor=\"transparent\";'>");
+                    out.println("<td style='padding: 12px; border-bottom: 1px solid #e9ecef; color: #212529;'>" + sessionInfo.getLoginTime().format(formatter) + "</td>");
+                    out.println("<td style='padding: 12px; border-bottom: 1px solid #e9ecef; color: #212529;'>");
+                    out.println("<span style='background-color: #e7f3ff; color: #0056b3; padding: 2px 6px; border-radius: 3px; font-size: 12px; font-weight: 500;'>" + sessionInfo.getSessionDurationMinutes() + " min</span>");
+                    out.println("</td>");
+                    out.println("<td style='padding: 12px; border-bottom: 1px solid #e9ecef; color: #212529; font-family: monospace;'>" + sessionInfo.getIpAddress() + "</td>");
+                    out.println("<td style='padding: 12px; border-bottom: 1px solid #e9ecef; color: #6c757d;'>" + sessionInfo.getInactiveDurationMinutes() + " min ago</td>");
                     out.println("</tr>");
                 }
 
+                out.println("</tbody>");
                 out.println("</table>");
+                out.println("</div>");
             }
             out.println("</div>");
         }
 
-        out.println("</div>");
+        out.println("</div>"); // End container
+
+        // Add responsive CSS
+        out.println("<style>");
+        out.println("@media (max-width: 768px) {");
+        out.println("  body { padding: 10px !important; }");
+        out.println("  h1 { font-size: 1.5rem !important; }");
+        out.println("  .profile-card { padding: 16px !important; }");
+        out.println("  table { font-size: 14px !important; }");
+        out.println("  th, td { padding: 8px !important; }");
+        out.println("}");
+        out.println("</style>");
+
+        addFooter(out);
+
         out.println("</body></html>");
     }
 
     /**
-     * V1 Show user list
+     * V2 Show user list with INLINE CSS
      */
     private void showUserList(PrintWriter out) {
+        // --- Define all CSS styles as strings for cleaner code ---
+
+        String containerStyle = "style='max-width: 1200px; margin: 20px auto; padding: 20px; background-color: #fdfdfd; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); font-family: sans-serif;'";
+        String h1Style = "style='color: #333; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;'";
+        String btnStyle = "style='display: inline-block; background-color: #007bff; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: 600;'";
+        String tableStyle = "style='width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.95em;'";
+        String thStyle = "style='background-color: #f8f9fa; color: #333; font-weight: 600; text-align: left; padding: 15px; border-bottom: 2px solid #dee2e6;'";
+        String tdStyle = "style='padding: 15px; border-bottom: 1px solid #e9ecef; color: #555;'";
+        String adminBadgeStyle = "style='background-color: #ffc107; color: #333; padding: 4px 8px; border-radius: 5px; font-size: 0.8em; font-weight: 700; white-space: nowrap;'";
+
+        // Style for table rows (default)
+        String trStyle = "style='background-color: #ffffff;'";
+        // Style for alternating table rows (for zebra-striping)
+        String trEvenStyle = "style='background-color: #f8f9fa;'";
+
+
+        // --- Start HTML Output ---
+
         out.println("<html><head><title>Active Users</title>");
         out.println("<meta charset='UTF-8'>");
-        addEnhancedCSS(out);
+
+        // A small style block is required for hover effects, which cannot be inlined.
+        out.println("<style>");
+        out.println("  tr.user-row:hover { background-color: #e9ecef !important; cursor: pointer; }");
+        out.println("  a.btn-back:hover { background-color: #0056b3 !important; }");
+        out.println("</style>");
+
         out.println("</head><body>");
 
-        out.println("<div class='container'>");
-        out.println("<h1>👥 Active Users</h1>");
-        out.println("<a href='/AuctionSystem/auction/' class='btn'>← Back to Auctions</a><hr>");
+        out.println("<div " + containerStyle + ">");
+        out.println("<h1 " + h1Style + ">👥 Active Users</h1>");
+        out.println("<a href='/AuctionSystem/auction/' class='btn-back' " + btnStyle + ">← Back to Auctions</a><hr style='border: none; border-top: 1px solid #eee; margin-top: 20px;'>");
 
         List<User> users = userService.getAllActiveUsers();
 
         if (users.isEmpty()) {
             out.println("<p>No active users found.</p>");
         } else {
-            out.println("<table>");
-            out.println("<tr><th>Username</th><th>Email</th><th>Role</th><th>Last Activity</th><th>Sessions</th></tr>");
+            out.println("<table " + tableStyle + ">");
 
-            for (User user : users) {
+            // Table Header
+            out.println("<tr>");
+            out.println("<th " + thStyle + ">Username</th>");
+            out.println("<th " + thStyle + ">Email</th>");
+            out.println("<th " + thStyle + ">Role</th>");
+            out.println("<th " + thStyle + ">Last Activity</th>");
+            out.println("<th " + thStyle + ">Sessions</th>");
+            out.println("</tr>");
+
+            // Table Body
+            for (int i = 0; i < users.size(); i++) {
+                User user = users.get(i);
                 int userSessionCount = sessionManager.getActiveSessionsForUser(user.getUsername()).size();
-                out.println("<tr>");
-                out.println("<td><strong>" + user.getUsername() + "</strong></td>");
-                out.println("<td>" + user.getEmail() + "</td>");
-                out.println("<td>" + (user.isAdmin() ? "<span class='admin-badge'>🔑 ADMIN</span>" : "👤 USER") + "</td>");
-                out.println("<td>" + user.getLastActivity().format(formatter) + "</td>");
-                out.println("<td>" + userSessionCount + " active</td>");
+
+                // Apply zebra-striping based on row index
+                String currentRowStyle = (i % 2 == 0) ? trEvenStyle : trStyle;
+
+                out.println("<tr class='user-row' " + currentRowStyle + ">");
+                out.println("<td " + tdStyle + "><strong>" + user.getUsername() + "</strong></td>");
+                out.println("<td " + tdStyle + ">" + user.getEmail() + "</td>");
+                out.println("<td " + tdStyle + ">" + (user.isAdmin() ? "<span " + adminBadgeStyle + ">🔑 ADMIN</span>" : "👤 USER") + "</td>");
+                out.println("<td " + tdStyle + ">" + user.getLastActivity().format(formatter) + "</td>");
+                out.println("<td " + tdStyle + ">" + userSessionCount + " active</td>");
                 out.println("</tr>");
             }
 
@@ -1132,6 +1267,7 @@ public class AuctionServlet extends HttpServlet {
         }
 
         out.println("</div>");
+        addFooter(out);
         out.println("</body></html>");
     }
 
@@ -2005,7 +2141,7 @@ public class AuctionServlet extends HttpServlet {
         out.println("Developed by <a href=\"https://github.com/isharax9\" target=\"_blank\" style=\"color: #007bff; text-decoration: none;\">@isharax9</a>");
         out.println("</p>");
         out.println("<p style=\"margin: 0; font-size: 12px; color: #888;\">");
-        out.println("Auction System Dashboard | BCD 1 Research Assignment");
+        out.println("Online Auction System | BCD 1 Research Assignment");
         out.println("</p>");
         out.println("</div>");
         out.println("</footer>");
