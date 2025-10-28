@@ -91,28 +91,20 @@ A **comprehensive enterprise application** for online auctions featuring real-ti
 
 ```mermaid
 graph TB
-    subgraph Client["🖥️ Client Layer"]
-        Browser[Web Browser]
-        WSClient[WebSocket Client]
-    end
+    Browser[🖥️ Web Browser]
+    WSClient[🔌 WebSocket Client]
     
-    subgraph Presentation["🌐 Presentation Layer"]
-        Servlet[Servlets & Filters]
-        WSEndpoint[WebSocket Endpoints]
-    end
+    Servlet[🌐 Servlets & Filters]
+    WSEndpoint[📡 WebSocket Endpoints]
     
-    subgraph Business["⚙️ Business Logic Layer"]
-        AuctionEJB[Auction Service<br/>Stateless]
-        BidEJB[Bid Service<br/>Stateless]
-        UserEJB[User Service<br/>Stateless]
-        SessionMgr[Session Manager<br/>Singleton]
-        AuctionMgr[Auction Manager<br/>Singleton]
-    end
+    AuctionEJB[⚙️ Auction Service]
+    BidEJB[💰 Bid Service]
+    UserEJB[👤 User Service]
+    SessionMgr[🔐 Session Manager]
+    AuctionMgr[⏰ Auction Manager]
     
-    subgraph Messaging["📨 Messaging Layer"]
-        JMS[JMS Queue]
-        MDB[Bid Notification MDB]
-    end
+    JMS[📨 JMS Queue]
+    MDB[📬 Message Driven Bean]
     
     Browser -->|HTTP/HTTPS| Servlet
     WSClient -->|WebSocket| WSEndpoint
@@ -125,78 +117,76 @@ graph TB
     WSEndpoint --> AuctionMgr
     WSEndpoint --> SessionMgr
     
-    BidEJB -->|Send Message| JMS
-    AuctionEJB -->|Send Message| JMS
+    BidEJB -->|Send| JMS
+    AuctionEJB -->|Send| JMS
     JMS -->|Consume| MDB
     MDB -->|Broadcast| WSEndpoint
     
-    AuctionMgr -->|Monitor| AuctionEJB
+    AuctionMgr -.->|Monitor| AuctionEJB
     
-    style Client fill:#e1f5ff
-    style Presentation fill:#fff3e0
-    style Business fill:#f3e5f5
-    style Messaging fill:#e8f5e9
+    classDef clientStyle fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
+    classDef webStyle fill:#F39C12,stroke:#C87F0A,stroke-width:3px,color:#fff
+    classDef businessStyle fill:#9B59B6,stroke:#7D3C98,stroke-width:3px,color:#fff
+    classDef messageStyle fill:#27AE60,stroke:#1E8449,stroke-width:3px,color:#fff
+    
+    class Browser,WSClient clientStyle
+    class Servlet,WSEndpoint webStyle
+    class AuctionEJB,BidEJB,UserEJB,SessionMgr,AuctionMgr businessStyle
+    class JMS,MDB messageStyle
 ```
 
 ### Bid Placement Flow
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    participant User as 👤 User
-    participant Servlet as Servlet
-    participant BidService as Bid Service EJB
-    participant JMS as JMS Queue
-    participant MDB as Notification MDB
-    participant WebSocket as WebSocket
-    participant Clients as 📱 Other Clients
+    participant U as 👤 User
+    participant S as Servlet
+    participant B as Bid Service
+    participant J as JMS Queue
+    participant M as MDB
+    participant W as WebSocket
+    participant C as 📱 Clients
     
-    User->>Servlet: POST /auction/{id}/bid
-    Servlet->>BidService: placeBid(auctionId, user, amount)
+    U->>+S: POST /auction/bid
+    S->>+B: placeBid()
     
-    alt Validation Successful
-        BidService->>BidService: Validate bid amount
-        BidService->>BidService: Update auction state
-        BidService->>JMS: Send BidUpdateMessage
-        BidService-->>Servlet: Return BidDTO
-        Servlet-->>User: 200 OK + Bid Details
+    alt ✅ Valid Bid
+        B->>B: Validate amount
+        B->>B: Update auction
+        B->>J: Send message
+        B-->>-S: BidDTO
+        S-->>-U: 200 OK
         
-        JMS->>MDB: Deliver message
-        MDB->>WebSocket: broadcastBidUpdate()
-        WebSocket->>Clients: Push real-time update
-    else Validation Failed
-        BidService-->>Servlet: Return null/error
-        Servlet-->>User: 400 Bad Request
+        J->>+M: Deliver
+        M->>+W: Broadcast
+        W->>C: Push update
+        W-->>-M: Done
+        M-->>-J: Ack
+    else ❌ Invalid Bid
+        B-->>S: Error
+        S-->>U: 400 Bad Request
     end
 ```
 
 ### Real-Time Notification Architecture
 
 ```mermaid
-graph LR
-    subgraph Sources["Event Sources"]
-        A[New Bid]
-        B[Auction Started]
-        C[Auction Ended]
-        D[Auction Cancelled]
-    end
+graph TB
+    A[📢 New Bid]
+    B[🚀 Auction Started]
+    C[🏁 Auction Ended]
+    D[❌ Auction Cancelled]
     
-    subgraph Processing["Event Processing"]
-        E[EJB Business Logic]
-        F[JMS Queue]
-        G[Message-Driven Bean]
-    end
+    E[⚙️ EJB Business Logic]
+    F[📨 JMS Queue]
+    G[📬 Message-Driven Bean]
     
-    subgraph Distribution["Distribution Layer"]
-        H[WebSocket Manager]
-        I[Session Manager]
-    end
+    H[📡 WebSocket Manager]
+    I[🔐 Session Manager]
     
-    subgraph Clients["Connected Clients"]
-        J[Browser 1]
-        K[Browser 2]
-        L[Browser N]
-    end
+    J[🌐 Browser 1]
+    K[🌐 Browser 2]
+    L[🌐 Browser N]
     
     A --> E
     B --> E
@@ -212,42 +202,37 @@ graph LR
     I --> K
     I --> L
     
-    style Sources fill:#ffebee
-    style Processing fill:#e3f2fd
-    style Distribution fill:#f3e5f5
-    style Clients fill:#e8f5e9
+    classDef eventStyle fill:#E74C3C,stroke:#C0392B,stroke-width:3px,color:#fff
+    classDef processStyle fill:#3498DB,stroke:#2980B9,stroke-width:3px,color:#fff
+    classDef distStyle fill:#9B59B6,stroke:#8E44AD,stroke-width:3px,color:#fff
+    classDef clientStyle fill:#2ECC71,stroke:#27AE60,stroke-width:3px,color:#fff
+    
+    class A,B,C,D eventStyle
+    class E,F,G processStyle
+    class H,I distStyle
+    class J,K,L clientStyle
 ```
 
 ### Component Interaction Diagram
 
 ```mermaid
-graph TD
-    subgraph Entities["📦 Domain Entities"]
-        E1[Auction]
-        E2[Bid]
-        E3[User]
-    end
+graph TB
+    E1[📦 Auction Entity]
+    E2[📦 Bid Entity]
+    E3[📦 User Entity]
     
-    subgraph DTOs["📋 Data Transfer Objects"]
-        D1[AuctionDTO]
-        D2[BidDTO]
-        D3[BidUpdateMessage]
-    end
+    D1[📋 AuctionDTO]
+    D2[📋 BidDTO]
+    D3[📋 BidUpdateMessage]
     
-    subgraph Services["⚙️ Business Services"]
-        S1[AuctionServiceBean]
-        S2[BidServiceBean]
-        S3[UserServiceBean]
-    end
+    S1[⚙️ Auction Service]
+    S2[⚙️ Bid Service]
+    S3[⚙️ User Service]
     
-    subgraph Singletons["🔒 Singleton Managers"]
-        SG1[AuctionManagerSingleton<br/>- Expiration Monitor<br/>- Scheduled Tasks]
-        SG2[UserSessionManagerBean<br/>- Session Tracking<br/>- Active Users]
-    end
+    SG1[🔒 Auction Manager]
+    SG2[🔒 Session Manager]
     
-    subgraph Async["🔄 Async Processing"]
-        A1[BidNotificationMDB<br/>- JMS Consumer<br/>- Event Handler]
-    end
+    A1[🔄 Notification MDB]
     
     S1 --> E1
     S2 --> E2
@@ -261,13 +246,19 @@ graph TD
     S2 -->|Publish| A1
     S3 -.->|Track| SG2
     
-    A1 -->|WebSocket| SG2
+    A1 -->|Broadcast| SG2
     
-    style Entities fill:#e1f5ff
-    style DTOs fill:#fff3e0
-    style Services fill:#f3e5f5
-    style Singletons fill:#e8f5e9
-    style Async fill:#fce4ec
+    classDef entityStyle fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
+    classDef dtoStyle fill:#F39C12,stroke:#C87F0A,stroke-width:3px,color:#fff
+    classDef serviceStyle fill:#9B59B6,stroke:#7D3C98,stroke-width:3px,color:#fff
+    classDef singletonStyle fill:#27AE60,stroke:#1E8449,stroke-width:3px,color:#fff
+    classDef asyncStyle fill:#E74C3C,stroke:#C0392B,stroke-width:3px,color:#fff
+    
+    class E1,E2,E3 entityStyle
+    class D1,D2,D3 dtoStyle
+    class S1,S2,S3 serviceStyle
+    class SG1,SG2 singletonStyle
+    class A1 asyncStyle
 ```
 
 ### Design Patterns
