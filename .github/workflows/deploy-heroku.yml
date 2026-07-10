@@ -1,0 +1,47 @@
+name: Deploy to Heroku
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: heroku-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build, release, and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Heroku CLI
+        run: curl -fsSL https://cli-assets.heroku.com/install.sh | sh
+
+      - name: Authenticate with Heroku Container Registry
+        run: heroku container:login
+
+      - name: Build and push web image
+        run: heroku container:push web --app "$HEROKU_APP_NAME"
+
+      - name: Release web image
+        run: heroku container:release web --app "$HEROKU_APP_NAME"
+
+      - name: Smoke test deployment
+        run: |
+          APP_URL="$(heroku apps:info --app "$HEROKU_APP_NAME" --json | jq -r '.app.web_url')"
+          curl --fail --show-error --silent \
+            --retry 12 --retry-delay 5 --retry-all-errors \
+            "${APP_URL}AuctionSystem/" >/dev/null
+

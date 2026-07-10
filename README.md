@@ -593,6 +593,31 @@ docker build -t auction-system .
 docker run -d -p 8080:8080 -p 4848:4848 --name auction auction-system
 ```
 
+### Heroku Deployment Pipeline
+
+This repository includes a container-based Heroku deployment because the
+application requires a Jakarta EE runtime. The image builds the WAR with Maven,
+runs it on GlassFish 7, configures the JMS resources, and binds GlassFish to the
+dynamic `PORT` supplied by Heroku.
+
+For manual deployment:
+
+```bash
+heroku create --stack container <app-name>
+heroku container:login
+heroku container:push web --app <app-name>
+heroku container:release web --app <app-name>
+```
+
+The GitHub Actions workflow in `.github/workflows/deploy-heroku.yml` deploys
+every push to `main`. Configure these repository secrets:
+
+- `HEROKU_API_KEY` - token returned by `heroku auth:token`
+- `HEROKU_APP_NAME` - the target Heroku application name
+
+The workflow releases the image and verifies `/AuctionSystem/` returns a
+successful response before completing.
+
 ### Environment Configuration
 
 | Environment | Server | Database | Messaging |
