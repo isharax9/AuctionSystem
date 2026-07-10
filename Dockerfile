@@ -23,5 +23,16 @@ RUN chmod 0755 /opt/glassfish7/custom/init.sh
 
 USER glassfish
 
-EXPOSE 8080
+RUN asadmin start-domain domain1 \
+    && asadmin create-jms-resource \
+        --restype jakarta.jms.ConnectionFactory \
+        jms/ConnectionFactory \
+    && asadmin create-jms-resource \
+        --restype jakarta.jms.Topic \
+        jms/topic/BidUpdates \
+    && asadmin deploy \
+        --name AuctionSystem \
+        /deploy/AuctionSystem.war \
+    && asadmin stop-domain domain1
 
+EXPOSE 8080
